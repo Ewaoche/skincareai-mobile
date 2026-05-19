@@ -53,6 +53,12 @@ npm.cmd install
 Copy-Item .env.example .env
 ```
 
+Default API base URL:
+
+```env
+EXPO_PUBLIC_API_BASE_URL=https://api.skincare-ai.gr/api
+```
+
 3. Start the app:
 
 ```powershell

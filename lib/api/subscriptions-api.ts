@@ -14,6 +14,13 @@ export type CurrentSubscription = {
   billingCycle: string;
   priceEur: string;
   renewsAt: string | null;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  stripePriceId: string | null;
+  cancelAtPeriodEnd: boolean;
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
+  billingProvider: 'STRIPE' | null;
 };
 
 export type SubscriptionUsage = {
@@ -37,5 +44,31 @@ export async function getCurrentSubscription(): Promise<CurrentSubscription> {
 export async function getSubscriptionUsage(): Promise<SubscriptionUsage> {
   const response =
     await apiClient.get<ApiEnvelope<SubscriptionUsage>>('/subscriptions/usage');
+  return response.data.data;
+}
+
+export async function createCheckoutSession(payload: {
+  plan: 'PREMIUM';
+}): Promise<{
+  checkoutUrl: string;
+  sessionId: string;
+  plan: string;
+}> {
+  const response = await apiClient.post<
+    ApiEnvelope<{
+      checkoutUrl: string;
+      sessionId: string;
+      plan: string;
+    }>
+  >('/subscriptions/checkout-session', payload);
+
+  return response.data.data;
+}
+
+export async function createBillingPortalSession(): Promise<{ url: string }> {
+  const response = await apiClient.post<ApiEnvelope<{ url: string }>>(
+    '/subscriptions/billing-portal',
+  );
+
   return response.data.data;
 }

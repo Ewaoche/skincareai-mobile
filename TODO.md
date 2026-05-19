@@ -48,6 +48,28 @@ Hard design rules:
 - use warm gradients and subtle glow carefully
 - keep the experience premium rather than noisy
 
+## Current Reality Check
+
+- [DONE] Authentication API integration is live against the backend
+- [DONE] Session restore, token refresh, and logout flow are implemented
+- [DONE] Consumer tab shell exists with Home, Analysis, History, and Profile routes
+- [DONE] Onboarding, login, register, forgot-password, and reset-password screens are implemented
+- [DONE] Subscription summary is wired into the Home screen
+- [DONE] Mobile analysis capture, upload, result retrieval, and history retrieval are live against the backend
+- [DONE] Analysis result and recommendation screens exist and are wired to the live backend
+- [INPROGRESS] Consumer app screens after login are mostly placeholders rather than finished product flows
+- [UNDONE] B2B mobile flow is not implemented yet
+
+## Immediate Next Slice
+
+- [INPROGRESS] Build the consumer analysis flow end-to-end on mobile
+- [DONE] Add camera/photo picker entry into `POST /api/analysis/start`
+- [INPROGRESS] Add analysis loading state and failure handling
+- [DONE] Add analysis result screen using `selfieUrl`, `faceMapUrl`, and score payload
+- [DONE] Add history list using `GET /api/analysis/history`
+- [DONE] Add history detail screen using `GET /api/analysis/:id`
+- [INPROGRESS] Render provider overlay masks cleanly on the analysis result screen
+
 ## Phase 1 - Mobile Project Foundation
 
 - [DONE] Initialize the standalone mobile project with Expo Version ~54.0.32  inside `Mobile/`
@@ -74,7 +96,7 @@ Hard design rules:
 - [DONE] Configure React Query provider
 - [DONE] Create Zustand auth store
 - [UNDONE] Create Zustand user store
-- [UNDONE] Create Zustand analysis store
+- [DONE] Create Zustand analysis store
 - [DONE] Create Zustand subscription store
 - [UNDONE] Create Zustand B2B client store
 - [DONE] Add secure token storage
@@ -86,18 +108,20 @@ Hard design rules:
 - [DONE] Create onboarding screen 1
 - [DONE] Create onboarding screen 2
 - [DONE] Create onboarding screen 3
-- [INPROGRESS] Add a cinematic onboarding art direction with AI scanning overlays and floating UI layers
+- [DONE] Add a cinematic onboarding art direction with AI scanning overlays and sliding visuals
 - [DONE] Use large elegant onboarding typography with high whitespace
 - [DONE] Create login screen
 - [DONE] Create register screen
 - [DONE] Create forgot password screen
 - [DONE] Create reset password screen
-- [UNDONE] Add form validation
+- [INPROGRESS] Add form validation
 - [DONE] Add loading states
 - [DONE] Add error states
 - [DONE] Add success states
 - [INPROGRESS] Add role-based redirect after login
 - [DONE] Redirect CONSUMER to consumer home
+- [DONE] Keep ADMIN accounts out of the mobile app and reserve them for the admin web dashboard
+- [DONE] Keep B2B roles out of the consumer mobile flow until the B2B dashboard exists
 - [UNDONE] Redirect B2B users to B2B dashboard
 
 ## Phase 4 - Consumer Navigation
@@ -116,11 +140,11 @@ Hard design rules:
 ## Phase 5 - Consumer Home
 
 - [DONE] Create consumer home screen
-- [UNDONE] Show welcome message
+- [DONE] Show welcome message
 - [DONE] Show subscription plan
 - [DONE] Show remaining analysis count
 - [DONE] Show start analysis CTA
-- [UNDONE] Show latest analysis summary
+- [DONE] Show latest analysis summary
 - [UNDONE] Show upgrade prompt when needed
 - [UNDONE] Show skin journal shortcut
 - [UNDONE] Show product recommendation shortcut
@@ -130,6 +154,7 @@ Hard design rules:
 
 - [UNDONE] Create camera permission screen
 - [UNDONE] Create selfie capture screen
+- [DONE] Add image picker fallback for devices/users who do not want live camera capture
 - [UNDONE] Add face oval guide overlay
 - [UNDONE] Add elegant AI scanning overlays that feel cinematic rather than clinical
 - [UNDONE] Add camera flip button
@@ -142,46 +167,46 @@ Hard design rules:
 
 ## Phase 7 - Analysis Loading Experience
 
-- [UNDONE] Create analysis loading screen
+- [DONE] Create analysis loading screen
 - [UNDONE] Add scanning animation
-- [UNDONE] Add progress indicator
-- [UNDONE] Add friendly waiting messages
+- [DONE] Add progress indicator
+- [DONE] Add friendly waiting messages
 - [UNDONE] Add a premium AI-loading sequence with glow, pulse, and layered scanning motion
 - [UNDONE] Add timeout handling
 - [UNDONE] Add retry option on failure
-- [UNDONE] Add success transition to result screen
+- [DONE] Add success transition to result screen
 
 ## Phase 8 - Analysis Results
 
-- [UNDONE] Create analysis result screen
-- [UNDONE] Show selfie image
-- [UNDONE] Show face map image
-- [UNDONE] Show overall skin grade
-- [UNDONE] Show acne score
-- [UNDONE] Show pigmentation score
-- [UNDONE] Show skin tone score
-- [UNDONE] Show pores score
-- [UNDONE] Show moisture score
-- [UNDONE] Show oiliness score
-- [UNDONE] Show wrinkles score
+- [DONE] Create analysis result screen
+- [DONE] Show selfie image
+- [INPROGRESS] Show face map image
+- [DONE] Show overall skin grade
+- [DONE] Show acne score
+- [DONE] Show pigmentation score
+- [DONE] Show skin tone score
+- [DONE] Show pores score
+- [DONE] Show moisture score
+- [DONE] Show oiliness score
+- [DONE] Show wrinkles score
 - [UNDONE] Add animated score bars
 - [UNDONE] Design the results screen with premium skincare editorial styling, not dashboard clutter
 - [UNDONE] Add explanation for each score
-- [UNDONE] Add CTA to product recommendations
+- [DONE] Add CTA to product recommendations
 - [UNDONE] Add CTA to export PDF
 
 ## Phase 9 - Product Recommendations
 
-- [UNDONE] Create recommendations screen
-- [UNDONE] Show ranked product cards
-- [UNDONE] Show product name
-- [UNDONE] Show brand
-- [UNDONE] Show product image
-- [UNDONE] Show AI reasoning summary
-- [UNDONE] Show target skin concern
-- [UNDONE] Add Buy Now button
-- [UNDONE] Open affiliate URL in external browser
-- [UNDONE] Fall back to product URL if no affiliate URL
+- [DONE] Create recommendations screen
+- [DONE] Show ranked product cards
+- [DONE] Show product name
+- [DONE] Show brand
+- [DONE] Show product image
+- [DONE] Show AI reasoning summary
+- [DONE] Show target skin concern
+- [DONE] Add Buy Now button
+- [DONE] Open affiliate URL in external browser
+- [DONE] Fall back to product URL if no affiliate URL
 - [UNDONE] Create product detail screen
 - [UNDONE] Show full ingredients
 - [UNDONE] Show full AI reasoning
@@ -189,14 +214,14 @@ Hard design rules:
 
 ## Phase 10 - Analysis History
 
-- [UNDONE] Create analysis history screen
-- [UNDONE] Show list of past analyses
-- [UNDONE] Show analysis date
-- [UNDONE] Show skin grade summary
+- [DONE] Create analysis history screen
+- [DONE] Show list of past analyses
+- [DONE] Show analysis date
+- [DONE] Show skin grade summary
 - [UNDONE] Add pagination
-- [UNDONE] Add pull-to-refresh
-- [UNDONE] Add empty state
-- [UNDONE] Add tap to view analysis detail
+- [DONE] Add pull-to-refresh
+- [DONE] Add empty state
+- [DONE] Add tap to view analysis detail
 
 ## Phase 11 - Before and After Comparison
 
@@ -233,13 +258,20 @@ Hard design rules:
 ## Phase 14 - Subscription Management
 
 - [UNDONE] Create subscription screen
-- [UNDONE] Show current plan
-- [UNDONE] Show usage limit
-- [UNDONE] Show analyses used
+- [DONE] Create subscription screen
+- [DONE] Show current plan
+- [DONE] Show usage limit
+- [DONE] Show analyses used
 - [UNDONE] Show renewal date
-- [UNDONE] Show upgrade options
+- [DONE] Show upgrade options
 - [UNDONE] Show cancel subscription option
-- [UNDONE] Add upgrade CTA from analysis limit screen
+- [DONE] Add upgrade CTA from home/profile
+
+## Phase 14B - Billing Return Flow
+
+- [DONE] Add deep-link success screen
+- [DONE] Add deep-link cancel screen
+- [DONE] Refetch subscription state after Stripe return
 
 ## Phase 15 - B2B Navigation
 
@@ -290,22 +322,22 @@ Hard design rules:
 
 ## Phase 19 - Profile and Settings
 
-- [UNDONE] Create profile screen
-- [UNDONE] Show user details
-- [UNDONE] Show account role
+- [DONE] Create profile screen
+- [DONE] Show user details
+- [DONE] Show account role
 - [UNDONE] Show subscription details
 - [UNDONE] Add edit profile screen
 - [UNDONE] Add change password screen
 - [UNDONE] Add notification preferences
 - [UNDONE] Add privacy policy link
 - [UNDONE] Add terms link
-- [UNDONE] Add logout button
+- [DONE] Add logout button
 
 ## Phase 20 - Shared Components
 
-- [UNDONE] Create Button component
-- [UNDONE] Create Input component
-- [UNDONE] Create Card component
+- [DONE] Create Button component
+- [DONE] Create Input component
+- [DONE] Create Card component
 - [UNDONE] Create Loading component
 - [UNDONE] Create EmptyState component
 - [UNDONE] Create ErrorState component
@@ -315,7 +347,7 @@ Hard design rules:
 - [UNDONE] Create JournalEntryCard component
 - [UNDONE] Create BeforeAfterSlider component
 - [UNDONE] Create SubscriptionPlanCard component
-- [UNDONE] Create reusable glass surface and gradient background components
+- [DONE] Create reusable glass surface and gradient background components
 - [UNDONE] Create reusable motion wrappers for fade, slide, stagger, and scan effects
 
 ## Phase 21 - Mobile QA

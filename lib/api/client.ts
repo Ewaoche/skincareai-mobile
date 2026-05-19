@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 import { getStoredTokens, storeTokens, clearStoredTokens } from '@/lib/storage/token-storage';
 
 function getFallbackApiBaseUrl() {
+  const productionBaseUrl = 'https://api.skincare-ai.gr/api';
   const expoConfig = Constants.expoConfig as
     | ({ extra?: { apiBaseUrl?: string }; hostUri?: string } & Record<string, unknown>)
     | null;
@@ -14,6 +15,10 @@ function getFallbackApiBaseUrl() {
     return explicitBaseUrl;
   }
 
+  if (!__DEV__) {
+    return productionBaseUrl;
+  }
+
   const hostUri = expoConfig?.hostUri;
   const host = hostUri?.split(':')[0];
 
@@ -21,7 +26,7 @@ function getFallbackApiBaseUrl() {
     return `http://${host}:3000/api`;
   }
 
-  return 'http://localhost:3000/api';
+  return productionBaseUrl;
 }
 
 const apiBaseUrl = getFallbackApiBaseUrl();

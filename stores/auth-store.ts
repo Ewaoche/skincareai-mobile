@@ -8,6 +8,29 @@ import {
 
 type AuthStatus = 'booting' | 'signed_out' | 'signed_in';
 
+function isMobileAllowedRole(role: AuthUser['role']): boolean {
+  return role === 'CONSUMER';
+}
+
+function buildMobileRoleError(role: AuthUser['role']): Error {
+  switch (role) {
+    case 'ADMIN':
+      return new Error(
+        'Admin accounts are only supported in the admin web dashboard.',
+      );
+    case 'B2B_PHARMACY':
+      return new Error(
+        'Pharmacy accounts will be available after the B2B mobile dashboard is released.',
+      );
+    case 'B2B_DERMATOLOGIST':
+      return new Error(
+        'Dermatologist accounts will be available after the B2B mobile dashboard is released.',
+      );
+    default:
+      return new Error('This account is not supported in the mobile app.');
+  }
+}
+
 type AuthStore = {
   status: AuthStatus;
   user: AuthUser | null;
@@ -18,8 +41,7 @@ type AuthStore = {
   signUp: (payload: {
     email: string;
     password: string;
-    firstName?: string;
-    lastName?: string;
+    fullName?: string;
   }) => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -44,6 +66,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
     try {
       const user = await me();
+
+      if (!isMobileAllowedRole(user.role)) {
+        await clearStoredTokens();
+        set({
+          status: 'signed_out',
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+        });
+        return;
+      }
+
       set({
         status: 'signed_in',
         user,
@@ -62,6 +96,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
   signIn: async (payload) => {
     const result = await login(payload);
+
+    if (!isMobileAllowedRole(result.user.role)) {
+      throw buildMobileRoleError(result.user.role);
+    }
+
     await storeTokens(result);
     set({
       status: 'signed_in',
@@ -72,6 +111,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
   signUp: async (payload) => {
     const result = await register(payload);
+
+    if (!isMobileAllowedRole(result.user.role)) {
+      throw buildMobileRoleError(result.user.role);
+    }
+
     await storeTokens(result);
     set({
       status: 'signed_in',

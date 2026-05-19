@@ -12,7 +12,7 @@ export default function IndexScreen() {
   if (status === 'signed_in') {
     return user?.role === 'CONSUMER'
       ? <Redirect href="/(app)/(tabs)/home" />
-      : <Redirect href="/(app)/(tabs)/home" />;
+      : <Redirect href="/(auth)/login" />;
   }
 
   return <Redirect href="/(auth)/welcome" />;

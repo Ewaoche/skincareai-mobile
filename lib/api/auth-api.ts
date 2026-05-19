@@ -20,8 +20,7 @@ export type AuthResponse = {
 export async function register(payload: {
   email: string;
   password: string;
-  firstName?: string;
-  lastName?: string;
+  fullName?: string;
 }): Promise<AuthResponse> {
   const response = await apiClient.post<ApiEnvelope<AuthResponse>>(
     '/auth/register',

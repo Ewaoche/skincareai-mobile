@@ -14,7 +14,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SkincareAI needs access to your photos so you can upload a selfie for skin analysis.",
+          "cameraPermission": "SkincareAI needs camera access so you can capture a selfie for live skin analysis."
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true
@@ -22,10 +29,18 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#FFF9F7"
-      }
+      },
+      "package": "com.skincareai"
     },
     "web": {
       "bundler": "metro"
+    },
+    "extra": {
+      "router": {},
+      "apiBaseUrl": "https://api.skincare-ai.gr/api",
+      "eas": {
+        "projectId": "85688813-04d7-42d0-bf09-0deeeb75af77"
+      }
     }
   }
 }
