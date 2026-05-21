@@ -1,5 +1,5 @@
 import { useLocalSearchParams, router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -26,6 +26,8 @@ import { useAnalysisStore } from '@/stores/analysis-store';
 
 export default function AnalysisResultScreen() {
   const layout = useResponsiveLayout();
+  const scrollViewRef = useRef<ScrollView | null>(null);
+  const visualAnalysisOffsetRef = useRef(0);
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const analysisId = Array.isArray(params.id) ? params.id[0] : params.id;
   const current = useAnalysisStore((state) => state.current);
@@ -38,6 +40,9 @@ export default function AnalysisResultScreen() {
   const [selectedConcernKey, setSelectedConcernKey] = useState<string | null>(
     null,
   );
+  const [visualMode, setVisualMode] = useState<'original' | 'overlay' | 'blended'>(
+    'blended',
+  );
 
   const priorityConcerns = useMemo(
     () => (analysis ? getWeakestConcerns(analysis.scores) : []),
@@ -49,6 +54,7 @@ export default function AnalysisResultScreen() {
     }
 
     return analysis.concernMasks
+      .filter((mask) => isDisplayableConcern(mask.concern))
       .filter((mask) => mask.urls.length > 0)
       .sort((left, right) => {
         const leftPriority = priorityConcerns.findIndex(
@@ -87,6 +93,16 @@ export default function AnalysisResultScreen() {
   const selectedConcernInsight = selectedConcernMask
     ? buildConcernInsight(selectedConcernMask.concern, selectedConcernScore)
     : null;
+  const activeVisualUri =
+    selectedConcernMask?.urls[0] ?? analysis?.faceMapUrl ?? null;
+
+  const handleSelectConcern = (concernKey: string) => {
+    setSelectedConcernKey(concernKey);
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(visualAnalysisOffsetRef.current + 24, 0),
+      animated: true,
+    });
+  };
 
   useEffect(() => {
     if (!analysisId) {
@@ -137,6 +153,7 @@ export default function AnalysisResultScreen() {
   return (
     <GradientScreen>
       <ScrollView
+        ref={scrollViewRef}
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
@@ -195,10 +212,59 @@ export default function AnalysisResultScreen() {
               </GlassCard>
 
               <GlassCard>
-                <View className="gap-4">
+                <View
+                  className="gap-4"
+                  onLayout={(event) => {
+                    visualAnalysisOffsetRef.current = event.nativeEvent.layout.y;
+                  }}
+                >
                   <Text className="font-bold text-lg text-charcoal">
                     Visual analysis
                   </Text>
+                  <View className="flex-row flex-wrap gap-3">
+                    {[
+                      { key: 'original', label: 'Original' },
+                      { key: 'overlay', label: 'Overlay' },
+                      { key: 'blended', label: 'Blended' },
+                    ].map((option) => {
+                      const active = visualMode === option.key;
+                      const disabled =
+                        option.key !== 'original' && !activeVisualUri;
+
+                      return (
+                        <Pressable
+                          key={option.key}
+                          onPress={() => {
+                            if (!disabled) {
+                              setVisualMode(
+                                option.key as 'original' | 'overlay' | 'blended',
+                              );
+                            }
+                          }}
+                          disabled={disabled}
+                          className={`rounded-full px-4 py-3 ${
+                            active
+                              ? 'bg-roseDeep'
+                              : disabled
+                                ? 'bg-white/45'
+                                : 'bg-white/70'
+                          }`}
+                        >
+                          <Text
+                            className={`text-xs font-semibold uppercase tracking-[1.4px] ${
+                              active
+                                ? 'text-white'
+                                : disabled
+                                  ? 'text-mist'
+                                  : 'text-charcoal'
+                            }`}
+                          >
+                            {option.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
                   <View
                     className="overflow-hidden rounded-[24px] bg-[#f7f1ee]"
                     style={{
@@ -206,22 +272,24 @@ export default function AnalysisResultScreen() {
                       maxHeight: layout.isTablet ? 520 : 420,
                     }}
                   >
-                    <ImageBackground
-                      source={{ uri: analysis.selfieUrl }}
-                      className="h-full w-full"
-                      resizeMode="contain"
-                      imageStyle={{
-                        alignSelf: 'center',
-                      }}
-                    >
-                      {selectedConcernMask?.urls[0] || analysis.faceMapUrl ? (
+                    {visualMode === 'overlay' && activeVisualUri ? (
+                      <Image
+                        source={{ uri: activeVisualUri }}
+                        className="h-full w-full"
+                        resizeMode="contain"
+                        style={{ alignSelf: 'center' }}
+                      />
+                    ) : visualMode === 'blended' && activeVisualUri ? (
+                      <ImageBackground
+                        source={{ uri: analysis.selfieUrl }}
+                        className="h-full w-full"
+                        resizeMode="contain"
+                        imageStyle={{
+                          alignSelf: 'center',
+                        }}
+                      >
                         <Image
-                          source={{
-                            uri:
-                              selectedConcernMask?.urls[0] ??
-                              analysis.faceMapUrl ??
-                              analysis.selfieUrl,
-                          }}
+                          source={{ uri: activeVisualUri }}
                           className="h-full w-full"
                           resizeMode="contain"
                           style={{
@@ -229,8 +297,15 @@ export default function AnalysisResultScreen() {
                             alignSelf: 'center',
                           }}
                         />
-                      ) : null}
-                    </ImageBackground>
+                      </ImageBackground>
+                    ) : (
+                      <Image
+                        source={{ uri: analysis.selfieUrl }}
+                        className="h-full w-full"
+                        resizeMode="contain"
+                        style={{ alignSelf: 'center' }}
+                      />
+                    )}
                   </View>
                   {selectedConcernMask ? (
                     <View className="gap-3 rounded-[22px] bg-white/70 px-4 py-4">
@@ -252,6 +327,13 @@ export default function AnalysisResultScreen() {
                       <Text className="font-sans text-sm leading-6 text-mist">
                         {selectedConcernInsight ??
                           'This overlay highlights where the provider detected the selected skin concern on your face.'}
+                      </Text>
+                      <Text className="font-sans text-xs leading-5 text-mist">
+                        {visualMode === 'original'
+                          ? 'Original keeps the untouched selfie visible for reference.'
+                          : visualMode === 'overlay'
+                            ? 'Overlay shows the returned provider mask asset without the base selfie.'
+                            : 'Blended combines the original selfie with the selected concern overlay.'}
                       </Text>
                     </View>
                   ) : (
@@ -298,12 +380,12 @@ export default function AnalysisResultScreen() {
               <GlassCard>
                 <View className="gap-4">
                   <Text className="font-bold text-lg text-charcoal">
-                    Concern overlays
+                    Available overlays
                   </Text>
                   {visibleConcernMasks.length > 0 ? (
                     <View className="gap-3">
                       <Text className="font-sans text-sm leading-6 text-mist">
-                        Tap a concern to switch the highlighted overlay above. This gives users a clearer view of the specific issue areas detected by the analysis provider.
+                        Tap a concern to switch the main visual analysis above. The selected concern stays highlighted and drives the explanation card.
                       </Text>
                       <View className="flex-row flex-wrap gap-3">
                         {visibleConcernMasks.map((mask) => {
@@ -312,7 +394,7 @@ export default function AnalysisResultScreen() {
                           return (
                             <Pressable
                               key={`${analysis.analysisId}-${mask.concern}-chip`}
-                              onPress={() => setSelectedConcernKey(mask.concern)}
+                              onPress={() => handleSelectConcern(mask.concern)}
                               className={`rounded-full px-4 py-3 ${
                                 active ? 'bg-roseDeep' : 'bg-white/70'
                               }`}
@@ -328,45 +410,6 @@ export default function AnalysisResultScreen() {
                           );
                         })}
                       </View>
-
-                      {visibleConcernMasks.map((mask) => (
-                        <Pressable
-                          key={`${analysis.analysisId}-${mask.concern}`}
-                          onPress={() => setSelectedConcernKey(mask.concern)}
-                          className={`gap-3 rounded-[22px] p-3 ${
-                            mask.concern === selectedConcernMask?.concern
-                              ? 'bg-[#ffe6ec]'
-                              : 'bg-white/70'
-                          }`}
-                        >
-                          <View className="flex-row items-center justify-between gap-3">
-                            <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                              {formatConcernName(mask.concern)}
-                            </Text>
-                            {mask.concern === selectedConcernMask?.concern ? (
-                              <Text className="font-medium text-xs uppercase tracking-[1.4px] text-roseDeep">
-                                Active
-                              </Text>
-                            ) : null}
-                          </View>
-                          <View
-                            className="overflow-hidden rounded-[20px] bg-[#f7f1ee]"
-                            style={{ height: 180 }}
-                          >
-                            <Image
-                              source={{ uri: analysis.selfieUrl }}
-                              className="absolute inset-0 h-full w-full"
-                              resizeMode="contain"
-                            />
-                            <Image
-                              source={{ uri: mask.urls[0] }}
-                              className="h-full w-full"
-                              resizeMode="contain"
-                              style={{ opacity: 0.88 }}
-                            />
-                          </View>
-                        </Pressable>
-                      ))}
                     </View>
                   ) : (
                     <Text className="font-sans text-base leading-7 text-mist">
@@ -410,6 +453,10 @@ function formatConcernName(value: string): string {
     .split('_')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
+}
+
+function isDisplayableConcern(value: string): boolean {
+  return value !== 'resize_image';
 }
 
 function getConcernScore(
