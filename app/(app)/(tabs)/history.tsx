@@ -209,6 +209,13 @@ export default function HistoryScreen() {
                         ? `Your latest lowest area is still ${latestWeakConcern.label.toLowerCase()} at ${latestWeakConcern.score}. Keep scanning consistently so progress is visible and product recommendations stay targeted.`
                         : 'Keep scanning consistently so your long-term skin progress becomes obvious and motivating.'}
                   </Text>
+                  {items.length > 1 ? (
+                    <Button
+                      label="Compare First vs Latest"
+                      variant="secondary"
+                      onPress={() => router.push('/progress-comparison' as never)}
+                    />
+                  ) : null}
                 </View>
               </GlassCard>
             ) : null}
