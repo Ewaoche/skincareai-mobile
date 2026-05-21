@@ -6,7 +6,7 @@ export default function IndexScreen() {
   const user = useAuthStore((state) => state.user);
 
   if (status === 'booting') {
-    return <Redirect href="/(auth)/welcome" />;
+    return null;
   }
 
   if (status === 'signed_in') {
