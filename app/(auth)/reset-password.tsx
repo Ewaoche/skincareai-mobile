@@ -67,8 +67,8 @@ export default function ResetPasswordScreen() {
             <View style={{ width: '100%', maxWidth: layout.isTablet ? 760 : 640, gap: 28 }}>
               <SectionHeading
                 eyebrow="New Password"
-                title="Secure your account again."
-                body="Enter your email, six-digit code, and a new password to continue your skincare journey."
+                title="Choose a new password"
+                body="Enter your email, verification code, and new password to regain access to your account."
               />
 
               <GlassCard>

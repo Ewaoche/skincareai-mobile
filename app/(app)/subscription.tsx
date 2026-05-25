@@ -15,11 +15,19 @@ import { SectionHeading } from '@/components/ui/section-heading';
 import {
   createBillingPortalSession,
   createCheckoutSession,
+  getSubscriptionApiErrorMessage,
 } from '@/lib/api/subscriptions-api';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 
-function formatSubscriptionStatus(status?: string | null): string {
-  switch (status) {
+function formatSubscriptionStatus(input: {
+  status?: string | null;
+  cancelAtPeriodEnd?: boolean;
+}): string {
+  if (input.cancelAtPeriodEnd) {
+    return 'Cancels at period end';
+  }
+
+  switch (input.status) {
     case 'ACTIVE':
       return 'Active';
     case 'TRIAL':
@@ -33,7 +41,7 @@ function formatSubscriptionStatus(status?: string | null): string {
     case 'EXPIRED':
       return 'Expired';
     default:
-      return status ?? 'Unknown';
+      return input.status ?? 'Unknown';
   }
 }
 
@@ -59,22 +67,22 @@ function buildSubscriptionMessage(input: {
   if (input.cancelAtPeriodEnd) {
     const accessEndsAt = formatDate(input.currentPeriodEnd ?? input.renewsAt);
     if (accessEndsAt) {
-      return `Your subscription remains active until ${accessEndsAt}.`;
+      return `Your subscription will end on ${accessEndsAt}. You will continue to have access until then. No further renewal will be charged.`;
     }
 
-    return 'Your subscription is scheduled to end at the close of the current billing period.';
+    return 'Your subscription is scheduled to end at the close of the current billing period. You will continue to have access until then. No further renewal will be charged.';
   }
 
   if (input.status === 'PAST_DUE') {
-    return 'Your latest Stripe invoice needs attention. Update payment details to keep Premium access working normally.';
+    return 'We could not process your latest payment. Update your billing details to keep Premium access active.';
   }
 
   if (input.status === 'INCOMPLETE') {
-    return 'Your checkout is not fully completed yet. Retry payment or open billing management to finish setup.';
+    return 'Your subscription setup is not complete yet. Continue to billing to finish setting up Premium.';
   }
 
   if (input.status === 'EXPIRED') {
-    return 'Your paid access is no longer active. Start a new checkout to restore Premium access.';
+    return 'Your Premium access has ended. Start a new subscription to continue using Premium features.';
   }
 
   return null;
@@ -107,9 +115,17 @@ export default function SubscriptionScreen() {
   const isPastDue = current?.status === 'PAST_DUE';
   const isIncomplete = current?.status === 'INCOMPLETE';
   const isExpired = current?.status === 'EXPIRED';
+  const isActivePremium =
+    isPremiumPlan &&
+    !isPastDue &&
+    !isIncomplete &&
+    !isExpired;
+  const isExhaustedPremium =
+    isActivePremium && (usage?.remainingAnalyses ?? 1) <= 0;
   const canManageBilling = Boolean(current?.stripeCustomerId);
   const premiumPrice = useMemo(() => 'EUR 19.99 / month', []);
-  const showUpgradeCta = !isPremiumPlan || isPastDue || isIncomplete || isExpired;
+  const showCheckoutCta =
+    isFreePlan || isPastDue || isIncomplete || isExpired;
   const statusToneClassName = getStatusToneClassName(current?.status);
   const subscriptionMessage = buildSubscriptionMessage({
     status: current?.status,
@@ -127,10 +143,7 @@ export default function SubscriptionScreen() {
       const session = await createCheckoutSession({ plan: 'PREMIUM' });
       await Linking.openURL(session.checkoutUrl);
     } catch (checkoutError) {
-      const message =
-        checkoutError instanceof Error
-          ? checkoutError.message
-          : 'We could not start checkout right now.';
+      const message = getSubscriptionApiErrorMessage(checkoutError);
       Alert.alert('Checkout unavailable', message);
     } finally {
       setStartingCheckout(false);
@@ -143,10 +156,7 @@ export default function SubscriptionScreen() {
       const portal = await createBillingPortalSession();
       await Linking.openURL(portal.url);
     } catch (portalError) {
-      const message =
-        portalError instanceof Error
-          ? portalError.message
-          : 'We could not open billing management right now.';
+      const message = getSubscriptionApiErrorMessage(portalError);
       Alert.alert('Billing unavailable', message);
     } finally {
       setOpeningPortal(false);
@@ -161,9 +171,7 @@ export default function SubscriptionScreen() {
         ? 'Complete Checkout'
         : isExpired
           ? 'Restore Premium'
-          : isFreePlan
-            ? 'Upgrade to Premium'
-            : 'Open Checkout Again';
+          : 'Upgrade to Premium';
 
   return (
     <GradientScreen>
@@ -175,8 +183,8 @@ export default function SubscriptionScreen() {
         <View className="gap-6 px-6 pt-6">
           <SectionHeading
             eyebrow="Subscription"
-            title="Manage your plan with confidence."
-            body="Checkout, billing updates, and access control all come from the live backend Stripe state. This screen reflects your real entitlement, not browser assumptions."
+            title="Manage your plan"
+            body="Review your plan, billing, and access in one place."
           />
 
           <GlassCard>
@@ -193,7 +201,10 @@ export default function SubscriptionScreen() {
                     {usage.remainingAnalyses} analyses remaining
                   </Text>
                   <Text className={statusToneClassName}>
-                    Status: {formatSubscriptionStatus(current.status)}
+                    Status: {formatSubscriptionStatus({
+                      status: current.status,
+                      cancelAtPeriodEnd: current.cancelAtPeriodEnd,
+                    })}
                   </Text>
                   {renewalDate ? (
                     <Text className="font-sans text-sm leading-6 text-mist">
@@ -225,7 +236,7 @@ export default function SubscriptionScreen() {
                 Premium consumer plan
               </Text>
               <Text className="font-sans text-base leading-7 text-mist">
-                Premium gives consumers up to 4 analyses each month, secure Stripe billing, and backend-synced access after checkout returns to the app.
+                Premium gives you up to 4 analyses each month, with secure billing and easy subscription management.
               </Text>
               <Text className="font-bold text-lg text-charcoal">
                 {premiumPrice}
@@ -238,31 +249,38 @@ export default function SubscriptionScreen() {
                   - 4 analyses per month
                 </Text>
                 <Text className="font-sans text-sm leading-6 text-mist">
-                  - billing managed through Stripe
+                  - secure billing management
                 </Text>
                 <Text className="font-sans text-sm leading-6 text-mist">
-                  - deep-link return back into the app after checkout
+                  - simple subscription updates in the app
                 </Text>
               </View>
-              <Button
-                label={checkoutButtonLabel}
-                onPress={() => void handleUpgrade()}
-                disabled={startingCheckout || !showUpgradeCta}
-              />
+              {showCheckoutCta ? (
+                <Button
+                  label={checkoutButtonLabel}
+                  onPress={() => void handleUpgrade()}
+                  disabled={startingCheckout}
+                />
+              ) : null}
               <Button
                 label={openingPortal ? 'Opening Billing...' : 'Manage Billing'}
                 variant="secondary"
                 onPress={() => void handleManageBilling()}
                 disabled={openingPortal || !canManageBilling}
               />
-              {!showUpgradeCta ? (
+              {isActivePremium && !isExhaustedPremium ? (
                 <Text className="font-sans text-sm leading-6 text-mist">
-                  Your Premium access is already active. Use billing management for payment method updates or cancellation changes.
+                  Your Premium plan is active. You can update your payment method or manage cancellation at any time.
+                </Text>
+              ) : null}
+              {isExhaustedPremium ? (
+                <Text className="font-sans text-sm leading-6 text-mist">
+                  You have used all analyses included in your current billing period. More analyses will be available on your renewal date.
                 </Text>
               ) : null}
               {!canManageBilling ? (
                 <Text className="font-sans text-sm leading-6 text-mist">
-                  Billing management becomes available after your first successful Stripe checkout creates a customer profile.
+                  Billing management will be available after your first successful subscription purchase.
                 </Text>
               ) : null}
             </View>

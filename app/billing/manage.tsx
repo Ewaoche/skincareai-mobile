@@ -5,10 +5,18 @@ import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { GradientScreen } from '@/components/ui/gradient-screen';
 import { SectionHeading } from '@/components/ui/section-heading';
+import { syncSubscription } from '@/lib/api/subscriptions-api';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 
-function formatSubscriptionStatus(status?: string | null): string {
-  switch (status) {
+function formatSubscriptionStatus(input: {
+  status?: string | null;
+  cancelAtPeriodEnd?: boolean;
+}): string {
+  if (input.cancelAtPeriodEnd) {
+    return 'Cancels at period end';
+  }
+
+  switch (input.status) {
     case 'ACTIVE':
       return 'Active';
     case 'TRIAL':
@@ -22,7 +30,7 @@ function formatSubscriptionStatus(status?: string | null): string {
     case 'EXPIRED':
       return 'Expired';
     default:
-      return status ?? 'Unknown';
+      return input.status ?? 'Unknown';
   }
 }
 
@@ -31,25 +39,52 @@ export default function BillingManageScreen() {
   const current = useSubscriptionStore((state) => state.current);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     const syncBillingState = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        await refresh();
-      } catch {
-        if (!cancelled) {
-          setError(
-            'We could not refresh your billing state right now. Please check again from the subscription screen.',
-          );
-        }
-      } finally {
-        if (!cancelled) {
+      setLoading(true);
+      setError(null);
+
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        try {
+          await syncSubscription();
+          await refresh();
+          if (cancelled) {
+            return;
+          }
+
+          const latest = useSubscriptionStore.getState().current;
+          if (latest) {
+            const accessEndsAt = latest.currentPeriodEnd ?? latest.renewsAt;
+            const accessEndsAtLabel = accessEndsAt
+              ? new Date(accessEndsAt).toLocaleDateString()
+              : null;
+            setMessage(
+              latest.cancelAtPeriodEnd
+                ? accessEndsAtLabel
+                  ? `Your subscription will end on ${accessEndsAtLabel}. You will continue to have access until then. No further renewal will be charged.`
+                  : 'Your subscription is scheduled to end at the close of the current billing period. You will continue to have access until then. No further renewal will be charged.'
+                : 'Your billing details have been updated.',
+            );
+          }
+
           setLoading(false);
+          return;
+        } catch {
+          // Retry briefly because the Stripe webhook may still be settling.
         }
+
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+
+      if (!cancelled) {
+        setLoading(false);
+        setError(
+          'We could not refresh your billing details right now. Please check your subscription page again shortly.',
+        );
       }
     };
 
@@ -67,15 +102,15 @@ export default function BillingManageScreen() {
           <View className="gap-5">
             <SectionHeading
               eyebrow="Billing Updated"
-              title="Your billing portal session is complete."
-              body="We refreshed your subscription state from the backend so the app can reflect the latest Stripe changes."
+              title="Your billing update is complete"
+              body="Your latest billing changes have been applied to your account."
             />
 
             {loading ? (
               <View className="gap-3">
                 <ActivityIndicator color="#D96B8C" />
                 <Text className="font-sans text-sm text-mist">
-                  Refreshing your subscription details...
+                  Refreshing your billing details...
                 </Text>
               </View>
             ) : error ? (
@@ -83,10 +118,16 @@ export default function BillingManageScreen() {
             ) : (
               <View className="gap-2">
                 <Text className="font-sans text-sm text-mist">
+                  {message ?? 'Your billing details have been refreshed.'}
+                </Text>
+                <Text className="font-sans text-sm text-mist">
                   Current plan: {current?.plan ?? 'Unknown'}
                 </Text>
                 <Text className="font-sans text-sm text-mist">
-                  Status: {formatSubscriptionStatus(current?.status)}
+                  Status: {formatSubscriptionStatus({
+                    status: current?.status,
+                    cancelAtPeriodEnd: current?.cancelAtPeriodEnd,
+                  })}
                 </Text>
               </View>
             )}

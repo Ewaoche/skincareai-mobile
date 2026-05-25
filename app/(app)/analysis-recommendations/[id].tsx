@@ -57,8 +57,8 @@ export default function AnalysisRecommendationsScreen() {
         <View className="gap-6 px-6 pt-6">
           <SectionHeading
             eyebrow="Recommendations"
-            title="Real products matched to your analysis."
-            body="These recommendations come from the live backend catalog and prefer affiliate-enabled buy links when available."
+            title="Products matched to your results"
+            body="These recommendations are selected to support the areas highlighted in your latest analysis."
           />
 
           {loading ? (
@@ -79,7 +79,7 @@ export default function AnalysisRecommendationsScreen() {
           ) : items.length === 0 ? (
             <GlassCard>
               <Text className="font-sans text-base leading-7 text-mist">
-                No matching recommendations are available yet for this analysis. This usually means the current product catalog does not have enough active products for the weakest detected concerns.
+                We do not have matching product recommendations for this result yet. Please check back again after your next analysis.
               </Text>
             </GlassCard>
           ) : (
@@ -89,7 +89,7 @@ export default function AnalysisRecommendationsScreen() {
                   <View className="flex-row items-start justify-between gap-4">
                     <View className="flex-1 gap-1">
                       <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                        {`Rank ${item.rank} · ${item.targetConcern}`}
+                        {`Rank ${item.rank} - ${item.targetConcern}`}
                       </Text>
                       <Text className="font-bold text-xl text-charcoal">
                         {item.name}

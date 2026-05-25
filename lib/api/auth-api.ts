@@ -19,6 +19,9 @@ export type AuthUser = {
   id: string;
   email: string;
   role: 'CONSUMER' | 'B2B_PHARMACY' | 'B2B_DERMATOLOGIST' | 'ADMIN';
+  firstName?: string | null;
+  lastName?: string | null;
+  fullName?: string | null;
 };
 
 export type AuthResponse = {

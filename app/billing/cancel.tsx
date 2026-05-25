@@ -12,12 +12,12 @@ export default function BillingCancelScreen() {
         <GlassCard>
           <View className="gap-5">
             <SectionHeading
-              eyebrow="Billing Cancelled"
-              title="Checkout was not completed."
-              body="Your current plan is unchanged. You can review premium access again when you are ready."
+              eyebrow="Purchase Not Completed"
+              title="Your subscription was not started"
+              body="Your current plan has not changed. You can come back and subscribe whenever you are ready."
             />
             <Text className="font-sans text-sm text-mist">
-              No entitlement changes were applied from this cancelled checkout flow.
+              No billing changes were made to your account.
             </Text>
             <Button
               label="Return to Subscription"

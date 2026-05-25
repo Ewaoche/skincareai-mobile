@@ -1,7 +1,10 @@
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   ImageBackground,
   Pressable,
@@ -21,7 +24,12 @@ import {
   getScoreNarrative,
   getWeakestConcerns,
 } from '@/lib/analysis/score-insights';
-import { AnalysisResult, getAnalysisById } from '@/lib/api/analysis-api';
+import {
+  AnalysisResult,
+  exportAnalysisPdf,
+  getAnalysisById,
+  getApiErrorMessage,
+} from '@/lib/api/analysis-api';
 import { useAnalysisStore } from '@/stores/analysis-store';
 
 export default function AnalysisResultScreen() {
@@ -43,6 +51,8 @@ export default function AnalysisResultScreen() {
   const [visualMode, setVisualMode] = useState<'original' | 'overlay' | 'blended'>(
     'blended',
   );
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const priorityConcerns = useMemo(
     () => (analysis ? getWeakestConcerns(analysis.scores) : []),
@@ -150,6 +160,47 @@ export default function AnalysisResultScreen() {
     );
   }, [analysis]);
 
+  const handleExportPdf = async () => {
+    if (!analysis) {
+      return;
+    }
+
+    try {
+      setExportingPdf(true);
+      setExportError(null);
+      const result = await exportAnalysisPdf(analysis.analysisId);
+      const canShare = await Sharing.isAvailableAsync();
+
+      if (!canShare) {
+        throw new Error('PDF sharing is not available on this device.');
+      }
+
+      if (!result.pdf?.content) {
+        throw new Error('The exported PDF file was empty.');
+      }
+
+      const fileUri = `${FileSystem.cacheDirectory}${result.pdf.fileName}`;
+      await FileSystem.writeAsStringAsync(fileUri, result.pdf.content, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      await Sharing.shareAsync(fileUri, {
+        mimeType: result.pdf.mimeType,
+        UTI: 'com.adobe.pdf',
+        dialogTitle: 'Share Skin Analysis Report',
+      });
+    } catch (exportPdfError) {
+      const message =
+        exportPdfError instanceof Error
+          ? getApiErrorMessage(exportPdfError)
+          : 'We could not export this PDF right now.';
+      setExportError(message);
+      Alert.alert('PDF export unavailable', message);
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   return (
     <GradientScreen>
       <ScrollView
@@ -161,8 +212,8 @@ export default function AnalysisResultScreen() {
         <View className="gap-6 px-6 pt-6">
           <SectionHeading
             eyebrow="Result"
-            title="Your live skin analysis."
-            body="Review your main concern overlay, score breakdown, and the provider-generated visual evidence behind your recommendations."
+            title="Your skin analysis"
+            body="Review your main focus areas, score breakdown, and visual highlights from your latest analysis."
           />
 
           {loading ? (
@@ -326,19 +377,19 @@ export default function AnalysisResultScreen() {
                       </View>
                       <Text className="font-sans text-sm leading-6 text-mist">
                         {selectedConcernInsight ??
-                          'This overlay highlights where the provider detected the selected skin concern on your face.'}
+                          'This overlay highlights the area connected to the selected concern.'}
                       </Text>
                       <Text className="font-sans text-xs leading-5 text-mist">
                         {visualMode === 'original'
-                          ? 'Original keeps the untouched selfie visible for reference.'
+                          ? 'Original shows your photo without any visual highlights.'
                           : visualMode === 'overlay'
-                            ? 'Overlay shows the returned provider mask asset without the base selfie.'
-                            : 'Blended combines the original selfie with the selected concern overlay.'}
+                            ? 'Overlay shows the highlighted concern area on its own.'
+                            : 'Blended combines your photo with the selected concern highlight.'}
                       </Text>
                     </View>
                   ) : (
                     <Text className="font-sans text-sm leading-6 text-mist">
-                      The provider did not return concern overlays for this analysis, so the original selfie is shown as fallback.
+                      Visual concern highlights are not available for this result, so your original photo is shown instead.
                     </Text>
                   )}
                   <Text className="font-sans text-sm text-mist">
@@ -385,7 +436,7 @@ export default function AnalysisResultScreen() {
                   {visibleConcernMasks.length > 0 ? (
                     <View className="gap-3">
                       <Text className="font-sans text-sm leading-6 text-mist">
-                        Tap a concern to switch the main visual analysis above. The selected concern stays highlighted and drives the explanation card.
+                        Tap a concern to update the main visual above and focus on that area.
                       </Text>
                       <View className="flex-row flex-wrap gap-3">
                         {visibleConcernMasks.map((mask) => {
@@ -413,7 +464,7 @@ export default function AnalysisResultScreen() {
                     </View>
                   ) : (
                     <Text className="font-sans text-base leading-7 text-mist">
-                      The provider did not return concern-specific overlays for this analysis.
+                      Visual highlights are not available for this analysis.
                     </Text>
                   )}
                 </View>
@@ -483,23 +534,23 @@ function getConcernScore(
 
 function buildConcernInsight(concern: string, score: number | null): string {
   const scoreText =
-    score === null ? 'This concern was detected in the returned overlay.' : `This area scored ${score}.`;
+    score === null ? 'This concern was highlighted in your analysis.' : `This area scored ${score}.`;
 
   switch (concern) {
     case 'acne':
-      return `${scoreText} The highlighted overlay shows where breakout-related activity was detected, helping the user connect the score to visible acne zones.`;
+      return `${scoreText} The highlighted area shows where breakout activity is most visible.`;
     case 'age_spot':
-      return `${scoreText} The overlay marks pigmentation and uneven tone areas so the user can see where discoloration support is needed most.`;
+      return `${scoreText} The highlighted area shows where discoloration and uneven tone are most visible.`;
     case 'pore':
-      return `${scoreText} The overlay highlights visible pore concentration areas, which supports the pore score with a concrete facial map.`;
+      return `${scoreText} The highlighted area shows where visible pores are more noticeable.`;
     case 'oiliness':
-      return `${scoreText} The overlay helps the user understand where excess oil is most likely affecting skin balance and texture.`;
+      return `${scoreText} The highlighted area shows where excess oil may be affecting skin balance and texture.`;
     case 'wrinkle':
-      return `${scoreText} The overlay highlights the regions contributing most to the wrinkle score, making the result easier to trust.`;
+      return `${scoreText} The highlighted area shows where fine lines and wrinkles are most visible.`;
     case 'moisture':
-      return `${scoreText} The overlay helps illustrate where dehydration-related texture or dryness signals are strongest.`;
+      return `${scoreText} The highlighted area shows where dryness or dehydration is most visible.`;
     case 'radiance':
-      return `${scoreText} The overlay points to tone and radiance variation so the user can see where brightness support is most relevant.`;
+      return `${scoreText} The highlighted area shows where tone and radiance look less even.`;
     default:
       return `${scoreText} This overlay shows the visual region linked to the selected concern.`;
   }

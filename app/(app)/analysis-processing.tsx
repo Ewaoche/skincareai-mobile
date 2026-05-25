@@ -8,9 +8,9 @@ import { SectionHeading } from '@/components/ui/section-heading';
 import { useAnalysisStore } from '@/stores/analysis-store';
 
 const processingMessages = [
-  'Uploading your selfie securely.',
-  'Waiting for the live skin analysis provider.',
-  'Preparing your result view.',
+  'Uploading your photo securely.',
+  'Reviewing your skin profile.',
+  'Preparing your results.',
 ] as const;
 
 export default function AnalysisProcessingScreen() {
@@ -60,7 +60,7 @@ export default function AnalysisProcessingScreen() {
 
   const body = useMemo(() => {
     if (!pendingAsset) {
-      return 'No selfie is queued for analysis. Go back and choose an image first.';
+      return 'No photo is ready yet. Go back and choose a photo to continue.';
     }
 
     if (submitError) {
@@ -76,8 +76,8 @@ export default function AnalysisProcessingScreen() {
         <View className="gap-6">
           <SectionHeading
             eyebrow="Processing"
-            title="Analyzing your selfie."
-            body="This step uses the live backend analysis pipeline and can take a short moment depending on provider response time."
+            title="Analyzing your photo"
+            body="This usually takes a short moment while we prepare your results."
           />
 
           <GlassCard>

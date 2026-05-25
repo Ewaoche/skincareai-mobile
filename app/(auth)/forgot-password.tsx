@@ -62,8 +62,8 @@ export default function ForgotPasswordScreen() {
             <View style={{ width: '100%', maxWidth: layout.isTablet ? 760 : 640, gap: 28 }}>
               <SectionHeading
                 eyebrow="Reset Access"
-                title="Request your reset code."
-                body="Enter the email tied to your account and we will send your six-digit verification code."
+                title="Reset your password"
+                body="Enter the email linked to your account and we will send you a six-digit verification code."
               />
 
               <GlassCard>

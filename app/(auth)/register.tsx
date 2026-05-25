@@ -64,8 +64,8 @@ export default function RegisterScreen() {
             <View style={{ width: '100%', maxWidth: layout.isTablet ? 760 : 640, gap: 28 }}>
               <SectionHeading
                 eyebrow="Create Account"
-                title="Start your personalized skincare experience."
-                body="Create your account to unlock AI skin analysis and premium skin tracking."
+                title="Create your account"
+                body="Save your results, follow your progress, and get a more personalized experience."
               />
 
               <GlassCard>

@@ -76,6 +76,16 @@ export type AnalysisRecommendationsResponse = {
   items: AnalysisRecommendationItem[];
 };
 
+export type AnalysisPdfExportResponse = {
+  analysisId: string;
+  pdfExportUrl: string;
+  pdf: {
+    content: string;
+    mimeType: 'application/pdf';
+    fileName: string;
+  };
+};
+
 export async function startAnalysis(payload: {
   asset: {
     uri: string;
@@ -225,6 +235,16 @@ export async function getAnalysisRecommendations(
 ): Promise<AnalysisRecommendationsResponse> {
   const response = await apiClient.get<ApiEnvelope<AnalysisRecommendationsResponse>>(
     `/analysis/${analysisId}/recommendations`,
+  );
+
+  return response.data.data;
+}
+
+export async function exportAnalysisPdf(
+  analysisId: string,
+): Promise<AnalysisPdfExportResponse> {
+  const response = await apiClient.post<ApiEnvelope<AnalysisPdfExportResponse>>(
+    `/analysis/${analysisId}/export`,
   );
 
   return response.data.data;

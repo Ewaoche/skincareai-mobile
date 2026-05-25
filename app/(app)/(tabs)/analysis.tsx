@@ -84,8 +84,8 @@ export default function AnalysisScreen() {
       <ResponsiveScrollScreen topPadding={18} bottomPadding={layout.tabBarHeight + 64} gap={18}>
           <SectionHeading
             eyebrow="Analysis"
-            title="Upload a clean selfie for live scoring."
-            body="Use the camera or your photo library, then send the image to the live skin analysis endpoint."
+            title="Start a new skin analysis"
+            body="Take a clear, well-lit photo or choose one from your library to get your latest results."
           />
 
           <GlassCard>
@@ -103,7 +103,7 @@ export default function AnalysisScreen() {
                   style={{ height: layout.isTablet ? 420 : 260 }}
                 >
                   <Text className="text-center font-sans text-base leading-7 text-mist">
-                    Choose a centered, well-lit selfie with one face visible.
+                    Choose a clear, front-facing photo with one face visible.
                   </Text>
                 </View>
               )}
@@ -148,9 +148,9 @@ export default function AnalysisScreen() {
           {latest ? (
             <GlassCard>
               <View className="gap-4">
-                <Text className="font-bold text-lg text-charcoal">
-                  Most recent scores
-                </Text>
+                  <Text className="font-bold text-lg text-charcoal">
+                    Most recent scores
+                  </Text>
                 <AnalysisScoreGrid scores={latest.scores} />
                 <Button
                   label="Open Latest Result"

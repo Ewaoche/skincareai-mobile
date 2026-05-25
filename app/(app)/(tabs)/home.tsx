@@ -32,12 +32,18 @@ export default function HomeScreen() {
     });
   }, [refresh, refreshLatest]);
 
+  const displayName =
+    user?.firstName?.trim() ||
+    user?.fullName?.trim() ||
+    user?.email?.split('@')[0] ||
+    'there';
+
   return (
     <GradientScreen>
       <ResponsiveScrollScreen topPadding={18} bottomPadding={layout.tabBarHeight + 64} gap={18}>
         <SectionHeading
           eyebrow="Home"
-          title={`Welcome${user?.email ? ',' : ''} ${user?.email?.split('@')[0] ?? 'back'}.`}
+          title={`Welcome, ${displayName}.`}
           body="A premium skincare dashboard designed to keep your next analysis, limits, and progress in view."
         />
 

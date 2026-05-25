@@ -101,7 +101,7 @@ export default function HistoryScreen() {
         percentChange: null,
         elapsedLabel: null,
         deltaLabel:
-          'Complete more analyses to unlock your long-term skin progress view.',
+          'Complete more analyses to see how your skin changes over time.',
       };
     }
 
@@ -127,12 +127,12 @@ export default function HistoryScreen() {
       elapsedLabel,
       deltaLabel:
         deltaValue === null
-          ? 'Complete more analyses to unlock your long-term skin progress view.'
+          ? 'Complete more analyses to see how your skin changes over time.'
           : deltaValue > 0
-            ? 'Your scores are moving in the right direction. This is the proof users come back to.'
+            ? 'Your results are moving in a positive direction. Keep tracking to build a clearer view of your progress.'
             : deltaValue < 0
-              ? 'This metric dipped. That makes the next routine adjustment and follow-up scan more valuable.'
-              : 'This metric is flat right now. Keep tracking to see whether your routine starts shifting it.',
+              ? 'This area needs a little more attention. A follow-up analysis can help you track what changes next.'
+              : 'This area is steady right now. Keep tracking to see how your routine develops over time.',
     };
   }, [progressData, timelineItems]);
 
@@ -172,14 +172,14 @@ export default function HistoryScreen() {
           >
             <SectionHeading
               eyebrow="History"
-              title="Your skin timeline."
-              body="See your skin move over time. This should become the clearest proof that your routine and subscription are working."
+              title="Your skin history"
+              body="See how your results change over time and keep track of your progress."
             />
 
             {!loading && !error ? (
               <ProgressChartCard
                 title="Progress over time"
-                description="Track one metric at a time and make improvement visible. This is the strongest retention surface in the app."
+                description="Track one area at a time and see how your results are changing."
                 options={metricOptions}
                 selectedKey={selectedMetric}
                 onSelect={setSelectedMetric}
@@ -194,20 +194,20 @@ export default function HistoryScreen() {
               <GlassCard>
                 <View className="gap-4">
                   <Text className="font-bold text-lg text-charcoal">
-                    Retention signal
+                    Progress summary
                   </Text>
                   <Text className="font-sans text-base leading-7 text-mist">
                     {progressSummary.percentChange !== null &&
                     progressSummary.percentChange > 0 &&
                     progressSummary.elapsedLabel
-                      ? `Your ${selectedMetric === 'overall' ? 'overall skin score' : metricOptions.find((option) => option.key === selectedMetric)?.label?.toLowerCase() ?? 'selected metric'} improved by ${progressSummary.percentChange}% in ${progressSummary.elapsedLabel}. This is the kind of visible progress users stay subscribed to keep seeing.`
+                      ? `Your ${selectedMetric === 'overall' ? 'overall skin score' : metricOptions.find((option) => option.key === selectedMetric)?.label?.toLowerCase() ?? 'selected metric'} improved by ${progressSummary.percentChange}% in ${progressSummary.elapsedLabel}.`
                       : progressSummary.percentChange !== null &&
                           progressSummary.percentChange < 0 &&
                           progressSummary.elapsedLabel
-                        ? `Your ${selectedMetric === 'overall' ? 'overall skin score' : metricOptions.find((option) => option.key === selectedMetric)?.label?.toLowerCase() ?? 'selected metric'} decreased by ${Math.abs(progressSummary.percentChange)}% in ${progressSummary.elapsedLabel}. That makes the next routine adjustment and follow-up scan more important.`
+                        ? `Your ${selectedMetric === 'overall' ? 'overall skin score' : metricOptions.find((option) => option.key === selectedMetric)?.label?.toLowerCase() ?? 'selected metric'} decreased by ${Math.abs(progressSummary.percentChange)}% in ${progressSummary.elapsedLabel}. A follow-up analysis can help you see what changes next.`
                       : latestWeakConcern
-                        ? `Your latest lowest area is still ${latestWeakConcern.label.toLowerCase()} at ${latestWeakConcern.score}. Keep scanning consistently so progress is visible and product recommendations stay targeted.`
-                        : 'Keep scanning consistently so your long-term skin progress becomes obvious and motivating.'}
+                        ? `Your lowest scoring area right now is ${latestWeakConcern.label.toLowerCase()} at ${latestWeakConcern.score}. Keep tracking regularly to see how it changes over time.`
+                        : 'Keep tracking regularly to build a clearer picture of your skin over time.'}
                   </Text>
                   {items.length > 1 ? (
                     <Button
@@ -263,7 +263,7 @@ export default function HistoryScreen() {
                             {new Date(item.capturedAt).toLocaleString()}
                           </Text>
                           <Text className="mt-1 font-sans text-sm text-mist">
-                            {`Average ${getAverageScore(item.scores)} · Grade ${getOverallGrade(item.scores)}`}
+                            {`Average ${getAverageScore(item.scores)} - Grade ${getOverallGrade(item.scores)}`}
                           </Text>
                         </View>
                         <View className="rounded-pill bg-charcoal px-3 py-2">
