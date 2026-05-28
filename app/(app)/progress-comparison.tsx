@@ -16,6 +16,8 @@ import { useResponsiveLayout } from '@/components/ui/responsive';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { getAverageScore } from '@/lib/analysis/score-insights';
 import { AnalysisResult, getAnalysisHistory } from '@/lib/api/analysis-api';
+import { useI18n } from '@/lib/i18n';
+import { AppLanguage } from '@/lib/i18n/types';
 
 type ComparisonMetric = {
   key: string;
@@ -28,6 +30,7 @@ type ComparisonMetric = {
 
 export default function ProgressComparisonScreen() {
   const layout = useResponsiveLayout();
+  const { language, t } = useI18n();
   const [items, setItems] = useState<AnalysisResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +43,7 @@ export default function ProgressComparisonScreen() {
       const response = await getAnalysisHistory({ page: 1, limit: 12 });
       setItems(response.items);
     } catch {
-      setError('We could not load your progress comparison right now.');
+      setError(t('comparison.errorDefault'));
     } finally {
       setLoading(false);
     }
@@ -68,14 +71,14 @@ export default function ProgressComparisonScreen() {
     }
 
     const metricDefinitions = [
-      { key: 'overall', label: 'Overall score' },
-      { key: 'acne', label: 'Acne' },
-      { key: 'pigmentation', label: 'Pigmentation' },
-      { key: 'skinTone', label: 'Skin tone' },
-      { key: 'pores', label: 'Pores' },
-      { key: 'moisture', label: 'Moisture' },
-      { key: 'oiliness', label: 'Oiliness' },
-      { key: 'wrinkles', label: 'Wrinkles' },
+      { key: 'overall', label: t('history.metric.overall') },
+      { key: 'acne', label: t('history.metric.acne') },
+      { key: 'pigmentation', label: t('history.metric.pigmentation') },
+      { key: 'skinTone', label: t('history.metric.skinTone') },
+      { key: 'pores', label: t('history.metric.pores') },
+      { key: 'moisture', label: t('history.metric.moisture') },
+      { key: 'oiliness', label: t('history.metric.oiliness') },
+      { key: 'wrinkles', label: t('history.metric.wrinkles') },
     ] as const;
 
     return metricDefinitions.map((metric) => {
@@ -101,7 +104,7 @@ export default function ProgressComparisonScreen() {
         percentChange,
       };
     });
-  }, [baseline, latest]);
+  }, [baseline, latest, t]);
 
   const strongestImprovement = useMemo(
     () =>
@@ -118,6 +121,7 @@ export default function ProgressComparisonScreen() {
         .sort((left, right) => left.percentChange - right.percentChange)[0] ?? null,
     [comparisonMetrics],
   );
+
   const bestScan = useMemo(
     () =>
       sortedItems
@@ -131,11 +135,12 @@ export default function ProgressComparisonScreen() {
 
   const elapsedLabel =
     baseline && latest
-      ? formatElapsedTime(baseline.capturedAt, latest.capturedAt)
-      : 'your saved history';
+      ? formatElapsedTime(baseline.capturedAt, latest.capturedAt, language, t('comparison.timelineRecent'))
+      : t('comparison.timelineRecent');
   const focusItem = focusView === 'before' ? baseline : latest;
   const focusAverage = focusItem ? getAverageScore(focusItem.scores) : null;
-  const focusTitle = focusView === 'before' ? 'Starting point' : 'Latest result';
+  const focusTitle =
+    focusView === 'before' ? t('comparison.startingPoint') : t('comparison.latestResult');
 
   return (
     <GradientScreen>
@@ -168,9 +173,9 @@ export default function ProgressComparisonScreen() {
             }}
           >
             <SectionHeading
-              eyebrow="Comparison"
-              title="First scan vs latest scan"
-              body="Compare your earlier and latest results side by side to see how your skin has changed over time."
+              eyebrow={t('comparison.eyebrow')}
+              title={t('comparison.title')}
+              body={t('comparison.body')}
             />
 
             {loading ? (
@@ -182,7 +187,7 @@ export default function ProgressComparisonScreen() {
                 <View className="gap-4">
                   <Text className="font-sans text-sm text-roseDeep">{error}</Text>
                   <Button
-                    label="Try Again"
+                    label={t('comparison.tryAgain')}
                     variant="secondary"
                     onPress={() => void loadHistory()}
                   />
@@ -192,13 +197,13 @@ export default function ProgressComparisonScreen() {
               <GlassCard>
                 <View className="gap-4">
                   <Text className="font-bold text-lg text-charcoal">
-                    Comparison unlocks after two analyses
+                    {t('comparison.unlockTitle')}
                   </Text>
                   <Text className="font-sans text-base leading-7 text-mist">
-                    Complete one more analysis so the app can compare your earliest and latest results and show visible progress over time.
+                    {t('comparison.unlockBody')}
                   </Text>
                   <Button
-                    label="Run Another Analysis"
+                    label={t('comparison.runAnother')}
                     onPress={() => router.push('/(app)/(tabs)/analysis')}
                   />
                 </View>
@@ -208,15 +213,15 @@ export default function ProgressComparisonScreen() {
                 <GlassCard>
                   <View className="gap-4">
                     <Text className="font-bold text-lg text-charcoal">
-                      Visual comparison
+                      {t('comparison.visualTitle')}
                     </Text>
                     <Text className="font-sans text-sm leading-6 text-mist">
-                      Switch between your first and latest scan for a closer look at how your skin has changed.
+                      {t('comparison.visualBody')}
                     </Text>
                     <View className="flex-row flex-wrap gap-3">
                       {[
-                        { key: 'before', label: 'Before' },
-                        { key: 'after', label: 'After' },
+                        { key: 'before', label: t('comparison.before') },
+                        { key: 'after', label: t('comparison.after') },
                       ].map((option) => {
                         const active = focusView === option.key;
 
@@ -246,7 +251,7 @@ export default function ProgressComparisonScreen() {
                         </Text>
                         <View className="mt-2 flex-row items-center justify-between gap-3">
                           <Text className="font-bold text-base text-charcoal">
-                            {new Date(focusItem.capturedAt).toLocaleDateString(undefined, {
+                            {new Date(focusItem.capturedAt).toLocaleDateString(language, {
                               month: 'short',
                               day: 'numeric',
                               year: 'numeric',
@@ -270,8 +275,8 @@ export default function ProgressComparisonScreen() {
                         </View>
                         <Text className="mt-4 font-sans text-sm leading-6 text-mist">
                           {focusView === 'before'
-                            ? 'This is your starting point and helps you track how your skin changes over time.'
-                            : 'This is your latest result and shows where your skin stands today.'}
+                            ? t('comparison.startingBody')
+                            : t('comparison.latestBody')}
                         </Text>
                       </View>
                     ) : null}
@@ -283,7 +288,10 @@ export default function ProgressComparisonScreen() {
                     >
                       {[baseline, latest].map((item, index) => {
                         const average = getAverageScore(item.scores);
-                        const title = index === 0 ? 'Starting point' : 'Latest result';
+                        const title =
+                          index === 0
+                            ? t('comparison.startingPoint')
+                            : t('comparison.latestResult');
 
                         return (
                           <View
@@ -298,7 +306,7 @@ export default function ProgressComparisonScreen() {
                               {title}
                             </Text>
                             <Text className="mt-2 font-bold text-base text-charcoal">
-                              {new Date(item.capturedAt).toLocaleDateString(undefined, {
+                              {new Date(item.capturedAt).toLocaleDateString(language, {
                                 month: 'short',
                                 day: 'numeric',
                                 year: 'numeric',
@@ -315,7 +323,9 @@ export default function ProgressComparisonScreen() {
                               />
                             </View>
                             <View className="mt-4 flex-row items-center justify-between">
-                              <Text className="font-sans text-sm text-mist">Average score</Text>
+                              <Text className="font-sans text-sm text-mist">
+                                {t('comparison.averageScore')}
+                              </Text>
                               <Text className="font-extra text-[28px] leading-[30px] text-charcoal">
                                 {average}
                               </Text>
@@ -330,14 +340,22 @@ export default function ProgressComparisonScreen() {
                 <GlassCard>
                   <View className="gap-4">
                     <Text className="font-bold text-lg text-charcoal">
-                      Progress summary
+                      {t('comparison.progressSummary')}
                     </Text>
                     <Text className="font-sans text-base leading-7 text-mist">
                       {strongestImprovement
-                        ? `Your strongest improvement is ${strongestImprovement.label.toLowerCase()}, up ${strongestImprovement.percentChange}% in ${elapsedLabel}.`
+                        ? t('comparison.summary.improved', {
+                            label: strongestImprovement.label.toLowerCase(),
+                            percent: strongestImprovement.percentChange,
+                            elapsed: elapsedLabel,
+                          })
                         : largestDrop
-                          ? `Your biggest drop is in ${largestDrop.label.toLowerCase()}, down ${Math.abs(largestDrop.percentChange)}% in ${elapsedLabel}.`
-                          : `Your results are relatively steady across ${elapsedLabel}. Keep tracking to build a clearer picture over time.`}
+                          ? t('comparison.summary.decreased', {
+                              label: largestDrop.label.toLowerCase(),
+                              percent: Math.abs(largestDrop.percentChange),
+                              elapsed: elapsedLabel,
+                            })
+                          : t('comparison.summary.steady', { elapsed: elapsedLabel })}
                     </Text>
                     <View
                       style={{
@@ -347,7 +365,7 @@ export default function ProgressComparisonScreen() {
                     >
                       <View className="flex-1 rounded-[22px] bg-white/70 px-4 py-4">
                         <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                          Time span
+                          {t('comparison.timeSpan')}
                         </Text>
                         <Text className="mt-2 font-bold text-xl text-charcoal">
                           {elapsedLabel}
@@ -355,7 +373,7 @@ export default function ProgressComparisonScreen() {
                       </View>
                       <View className="flex-1 rounded-[22px] bg-white/70 px-4 py-4">
                         <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                          Net overall change
+                          {t('comparison.netOverallChange')}
                         </Text>
                         <Text
                           className={`mt-2 font-bold text-xl ${
@@ -374,7 +392,7 @@ export default function ProgressComparisonScreen() {
                 <GlassCard>
                   <View className="gap-4">
                     <Text className="font-bold text-lg text-charcoal">
-                      The story so far
+                      {t('comparison.storyTitle')}
                     </Text>
                     <View
                       style={{
@@ -384,34 +402,36 @@ export default function ProgressComparisonScreen() {
                     >
                       <View className="flex-1 rounded-[22px] bg-white/70 px-4 py-4">
                         <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                          Biggest win
+                          {t('comparison.biggestWin')}
                         </Text>
                         <Text className="mt-2 font-bold text-lg text-charcoal">
-                          {strongestImprovement
-                            ? strongestImprovement.label
-                            : 'No clear winner yet'}
+                          {strongestImprovement ? strongestImprovement.label : t('comparison.noWinner')}
                         </Text>
                         <Text className="mt-2 font-sans text-sm leading-6 text-mist">
                           {strongestImprovement
-                            ? `${strongestImprovement.label} is up ${Math.abs(
-                                strongestImprovement.percentChange,
-                              )}% over ${elapsedLabel}.`
-                            : 'Keep tracking to see which area improves the most over time.'}
+                            ? t('comparison.winDetail', {
+                                label: strongestImprovement.label,
+                                percent: Math.abs(strongestImprovement.percentChange),
+                                elapsed: elapsedLabel,
+                              })
+                            : t('comparison.winFallback')}
                         </Text>
                       </View>
                       <View className="flex-1 rounded-[22px] bg-white/70 px-4 py-4">
                         <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                          Needs attention
+                          {t('comparison.needsAttention')}
                         </Text>
                         <Text className="mt-2 font-bold text-lg text-charcoal">
-                          {largestDrop ? largestDrop.label : 'No major drop'}
+                          {largestDrop ? largestDrop.label : t('comparison.noDrop')}
                         </Text>
                         <Text className="mt-2 font-sans text-sm leading-6 text-mist">
                           {largestDrop
-                            ? `${largestDrop.label} is down ${Math.abs(
-                                largestDrop.percentChange,
-                              )}% over ${elapsedLabel}.`
-                            : 'No major drop has appeared so far, which is a good sign of stability.'}
+                            ? t('comparison.dropDetail', {
+                                label: largestDrop.label,
+                                percent: Math.abs(largestDrop.percentChange),
+                                elapsed: elapsedLabel,
+                              })
+                            : t('comparison.dropFallback')}
                         </Text>
                       </View>
                     </View>
@@ -423,32 +443,40 @@ export default function ProgressComparisonScreen() {
                     >
                       <View className="flex-1 rounded-[22px] bg-white/70 px-4 py-4">
                         <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                          Best scan
+                          {t('comparison.bestScan')}
                         </Text>
                         <Text className="mt-2 font-bold text-lg text-charcoal">
-                          {bestScan ? `Score ${bestScan.average}` : 'Not enough data'}
+                          {bestScan
+                            ? t('comparison.bestScanScore', { score: bestScan.average })
+                            : t('comparison.notEnoughData')}
                         </Text>
                         <Text className="mt-2 font-sans text-sm leading-6 text-mist">
                           {bestScan
-                            ? `Your best overall scan so far was on ${new Date(
-                                bestScan.item.capturedAt,
-                              ).toLocaleDateString(undefined, {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })}.`
-                            : 'Complete more analyses to unlock a stronger milestone view.'}
+                            ? t('comparison.bestScanDetail', {
+                                date: new Date(bestScan.item.capturedAt).toLocaleDateString(
+                                  language,
+                                  {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                  },
+                                ),
+                              })
+                            : t('comparison.bestScanFallback')}
                         </Text>
                       </View>
                       <View className="flex-1 rounded-[22px] bg-white/70 px-4 py-4">
                         <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                          Consistency
+                          {t('comparison.consistency')}
                         </Text>
                         <Text className="mt-2 font-bold text-lg text-charcoal">
-                          {sortedItems.length} analyses
+                          {t('comparison.analysisCount', { count: sortedItems.length })}
                         </Text>
                         <Text className="mt-2 font-sans text-sm leading-6 text-mist">
-                          {`You have tracked ${sortedItems.length} analyses across ${elapsedLabel}. The more consistently you check in, the clearer your progress becomes.`}
+                          {t('comparison.consistencyDetail', {
+                            count: sortedItems.length,
+                            elapsed: elapsedLabel,
+                          })}
                         </Text>
                       </View>
                     </View>
@@ -458,7 +486,7 @@ export default function ProgressComparisonScreen() {
                 <GlassCard>
                   <View className="gap-4">
                     <Text className="font-bold text-lg text-charcoal">
-                      Parameter changes
+                      {t('comparison.parameterChanges')}
                     </Text>
                     {comparisonMetrics.map((metric) => (
                       <View
@@ -487,24 +515,24 @@ export default function ProgressComparisonScreen() {
                           }`}
                         >
                           {metric.delta > 0
-                            ? 'Improving'
+                            ? t('comparison.improving')
                             : metric.delta < 0
-                              ? 'Needs more support'
-                              : 'Stable'}
+                              ? t('comparison.needsSupport')
+                              : t('comparison.stable')}
                         </Text>
                         <View className="mt-3 flex-row items-center justify-between gap-3">
                           <View>
                             <Text className="font-sans text-xs uppercase tracking-[1.4px] text-mist">
-                              First
+                              {t('comparison.first')}
                             </Text>
                             <Text className="mt-1 font-bold text-lg text-charcoal">
                               {metric.baseline}
                             </Text>
                           </View>
-                          <Text className="font-sans text-sm text-mist">to</Text>
+                          <Text className="font-sans text-sm text-mist">{t('comparison.to')}</Text>
                           <View className="items-end">
                             <Text className="font-sans text-xs uppercase tracking-[1.4px] text-mist">
-                              Latest
+                              {t('comparison.latest')}
                             </Text>
                             <Text className="mt-1 font-bold text-lg text-charcoal">
                               {metric.latest}
@@ -517,11 +545,19 @@ export default function ProgressComparisonScreen() {
                           }`}
                         >
                           {metric.delta >= 0
-                            ? `${metric.label} improved by ${Math.abs(metric.percentChange)}% over ${elapsedLabel}.`
-                            : `${metric.label} decreased by ${Math.abs(metric.percentChange)}% over ${elapsedLabel}.`}
+                            ? t('comparison.metricImproved', {
+                                label: metric.label,
+                                percent: Math.abs(metric.percentChange),
+                                elapsed: elapsedLabel,
+                              })
+                            : t('comparison.metricDecreased', {
+                                label: metric.label,
+                                percent: Math.abs(metric.percentChange),
+                                elapsed: elapsedLabel,
+                              })}
                         </Text>
                         <Text className="mt-2 font-sans text-sm leading-6 text-mist">
-                          {buildMetricNarrative(metric, elapsedLabel)}
+                          {buildMetricNarrative(metric, elapsedLabel, t)}
                         </Text>
                       </View>
                     ))}
@@ -530,7 +566,7 @@ export default function ProgressComparisonScreen() {
 
                 <View className="gap-3 pb-6">
                   <Button
-                    label="Open Latest Report"
+                    label={t('comparison.openLatest')}
                     onPress={() =>
                       router.push({
                         pathname: '/analysis-result/[id]' as never,
@@ -539,7 +575,7 @@ export default function ProgressComparisonScreen() {
                     }
                   />
                   <Button
-                    label="Back to History"
+                    label={t('comparison.backHistory')}
                     variant="secondary"
                     onPress={() => router.back()}
                   />
@@ -553,26 +589,43 @@ export default function ProgressComparisonScreen() {
   );
 }
 
-function formatElapsedTime(start: string, end: string): string {
+function formatElapsedTime(
+  start: string,
+  end: string,
+  language: AppLanguage,
+  fallback: string,
+): string {
   const startTime = new Date(start).getTime();
   const endTime = new Date(end).getTime();
 
   if (!Number.isFinite(startTime) || !Number.isFinite(endTime) || endTime <= startTime) {
-    return 'your recent timeline';
+    return fallback;
   }
 
   const diffDays = Math.max(Math.round((endTime - startTime) / (1000 * 60 * 60 * 24)), 1);
 
   if (diffDays < 14) {
+    if (language === 'el') {
+      return diffDays === 1 ? '1 ημέρα' : `${diffDays} ημέρες`;
+    }
+
     return `${diffDays} day${diffDays === 1 ? '' : 's'}`;
   }
 
   if (diffDays < 60) {
     const weeks = Math.max(Math.round(diffDays / 7), 1);
+    if (language === 'el') {
+      return weeks === 1 ? '1 εβδομάδα' : `${weeks} εβδομάδες`;
+    }
+
     return `${weeks} week${weeks === 1 ? '' : 's'}`;
   }
 
   const months = Math.max(Math.round(diffDays / 30), 1);
+  if (language === 'el') {
+    return months === 1 ? '1 μήνα' : `${months} μήνες`;
+  }
+
   return `${months} month${months === 1 ? '' : 's'}`;
 }
 
@@ -589,31 +642,41 @@ function formatPercent(value: number): string {
 function buildMetricNarrative(
   metric: ComparisonMetric,
   elapsedLabel: string,
+  t: (key: any, variables?: Record<string, string | number>) => string,
 ): string {
   if (metric.delta === 0) {
-    return `${metric.label} has stayed steady across ${elapsedLabel}. Keep the routine consistent so the next scan reveals a stronger directional change.`;
+    return t('comparison.narrative.steady', {
+      label: metric.label,
+      elapsed: elapsedLabel,
+    });
   }
 
-  const direction = metric.delta > 0 ? 'moving in the right direction' : 'showing resistance';
+  const direction =
+    metric.delta > 0
+      ? t('comparison.narrative.directionPositive')
+      : t('comparison.narrative.directionNegative');
 
   switch (metric.key) {
     case 'acne':
-      return `Your acne trend is ${direction}. This helps you see how breakouts are changing over time.`;
+      return t('comparison.narrative.acne', { direction });
     case 'pigmentation':
-      return `Pigmentation usually changes gradually, so this ${elapsedLabel} view helps you notice progress that is easy to miss day to day.`;
+      return t('comparison.narrative.pigmentation', { elapsed: elapsedLabel });
     case 'skinTone':
-      return `Tone consistency helps your skin look more balanced overall, not just in one area.`;
+      return t('comparison.narrative.skinTone');
     case 'pores':
-      return `Pore changes are subtle in day-to-day life. Tracking them over ${elapsedLabel} makes improvement easier to believe and maintain.`;
+      return t('comparison.narrative.pores', { elapsed: elapsedLabel });
     case 'moisture':
-      return `Moisture is one of the easiest changes to notice. When hydration improves, your skin often looks and feels healthier.`;
+      return t('comparison.narrative.moisture');
     case 'oiliness':
-      return `Oiliness balance affects how the skin feels every day. This helps translate analysis into something the user can connect back to the routine.`;
+      return t('comparison.narrative.oiliness');
     case 'wrinkles':
-      return `Wrinkle improvement reinforces the long-game value of the app. Even modest progress here can be powerful when it is tracked clearly over time.`;
+      return t('comparison.narrative.wrinkles');
     case 'overall':
-      return `Overall score gives the user one clean headline number. It is the simplest way to show whether the full routine is compounding in the right direction.`;
+      return t('comparison.narrative.overall');
     default:
-      return `This metric is ${direction} over ${elapsedLabel}, which helps turn raw analysis into a clearer progress story.`;
+      return t('comparison.narrative.default', {
+        direction,
+        elapsed: elapsedLabel,
+      });
   }
 }

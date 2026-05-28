@@ -10,9 +10,12 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 import { AnalysisScoreGrid } from '@/components/analysis/analysis-score-grid';
 import { ResponsiveScrollScreen, useResponsiveLayout } from '@/components/ui/responsive';
+import { useI18n } from '@/lib/i18n';
+import { AppLanguage } from '@/lib/i18n/types';
 
 export default function HomeScreen() {
   const layout = useResponsiveLayout();
+  const { language, t } = useI18n();
   const user = useAuthStore((state) => state.user);
   const current = useSubscriptionStore((state) => state.current);
   const usage = useSubscriptionStore((state) => state.usage);
@@ -42,9 +45,9 @@ export default function HomeScreen() {
     <GradientScreen>
       <ResponsiveScrollScreen topPadding={18} bottomPadding={layout.tabBarHeight + 64} gap={18}>
         <SectionHeading
-          eyebrow="Home"
-          title={`Welcome, ${displayName}.`}
-          body="A premium skincare dashboard designed to keep your next analysis, limits, and progress in view."
+          eyebrow={t('home.eyebrow')}
+          title={t('home.welcome', { name: displayName })}
+          body={t('home.body')}
         />
 
         <GlassCard>
@@ -59,7 +62,7 @@ export default function HomeScreen() {
             >
               <View style={{ flex: 1, gap: 8 }}>
                 <Text className="font-medium text-sm uppercase tracking-[2px] text-roseDeep">
-                  Subscription
+                  {t('home.subscription')}
                 </Text>
                 {current && usage ? (
                   <>
@@ -70,10 +73,10 @@ export default function HomeScreen() {
                       {current.plan}
                     </Text>
                     <Text className="font-sans text-base text-mist">
-                      {usage.remainingAnalyses} analyses remaining
+                      {t('home.remaining', { count: usage.remainingAnalyses })}
                     </Text>
                     <Text className="font-sans text-sm text-mist">
-                      {usage.reason ?? 'Your subscription is ready for the next scan.'}
+                      {usage.reason ?? t('home.ready')}
                     </Text>
                   </>
                 ) : error ? (
@@ -86,7 +89,7 @@ export default function HomeScreen() {
               {current?.plan === 'FREE' ? (
                 <View style={{ width: layout.isTablet ? 220 : '100%' }}>
                   <Button
-                    label="Upgrade Plan"
+                    label={t('home.upgradePlan')}
                     variant="secondary"
                     onPress={() =>
                       router.push({
@@ -106,18 +109,18 @@ export default function HomeScreen() {
             >
               <View className="rounded-[24px] border border-white/70 bg-white/60 px-4 py-4" style={{ flex: 1 }}>
                 <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                  Status
+                  {t('home.status')}
                 </Text>
                 <Text className="mt-2 font-bold text-lg text-charcoal">
-                  {current?.status ?? 'Loading'}
+                  {current?.status ?? t('home.loading')}
                 </Text>
               </View>
               <View className="rounded-[24px] border border-white/70 bg-white/60 px-4 py-4" style={{ flex: 1 }}>
                 <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                  Refresh
+                  {t('home.refresh')}
                 </Text>
                 <Text className="mt-2 font-bold text-lg text-charcoal">
-                  {usage ? `${usage.remainingAnalyses} left` : 'Syncing'}
+                  {usage ? t('home.left', { count: usage.remainingAnalyses }) : t('home.syncing')}
                 </Text>
               </View>
             </View>
@@ -127,14 +130,13 @@ export default function HomeScreen() {
         <GlassCard>
           <View className="gap-4">
             <Text className="font-bold text-lg text-charcoal">
-              Start your next analysis
+              {t('home.startTitle')}
             </Text>
             <Text className="font-sans text-base leading-7 text-mist">
-              Pick a clear selfie, upload it to the live analysis endpoint, and
-              review your returned skin scores in a premium result view.
+              {t('home.startBody')}
             </Text>
             <Button
-              label="Begin Analysis"
+              label={t('home.beginAnalysis')}
               onPress={() => router.push('/(app)/(tabs)/analysis')}
             />
           </View>
@@ -143,16 +145,18 @@ export default function HomeScreen() {
         <GlassCard>
           <View className="gap-4">
             <Text className="font-bold text-lg text-charcoal">
-              Latest analysis
+              {t('home.latestTitle')}
             </Text>
             {latest ? (
               <>
                 <Text className="font-sans text-sm text-mist">
-                  Captured {new Date(latest.capturedAt).toLocaleString()}
+                  {t('home.captured', {
+                    date: new Date(latest.capturedAt).toLocaleString(language),
+                  })}
                 </Text>
                 <AnalysisScoreGrid scores={latest.scores} />
                 <Button
-                  label="Open Result"
+                  label={t('home.openResult')}
                   variant="secondary"
                   onPress={() =>
                     router.push({
@@ -166,7 +170,7 @@ export default function HomeScreen() {
               <ActivityIndicator color="#D96B8C" />
             ) : (
               <Text className="font-sans text-sm text-mist">
-                {latestError ?? 'Your first completed analysis will appear here.'}
+                {latestError ?? t('home.firstAnalysis')}
               </Text>
             )}
           </View>

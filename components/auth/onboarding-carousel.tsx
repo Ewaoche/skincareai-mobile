@@ -12,6 +12,7 @@ import {
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { useI18n } from '@/lib/i18n';
 
 type Slide = {
   id: string;
@@ -20,33 +21,6 @@ type Slide = {
   cta: string;
   kind: 'scan' | 'regimen' | 'progress';
 };
-
-const slides: Slide[] = [
-  {
-    id: 'scan',
-    title: 'Reveal Your\nRadiance.',
-    body:
-      'Experience a professional skin analysis in seconds. Our AI reads your skin profile and highlights what needs attention.',
-    cta: 'Begin Analysis',
-    kind: 'scan',
-  },
-  {
-    id: 'regimen',
-    title: 'Personalized\nRegimen.',
-    body:
-      'Build a routine around your real skin condition with selected skincare support and beauty-tech guidance designed for consistency.',
-    cta: 'Discover Plan',
-    kind: 'regimen',
-  },
-  {
-    id: 'progress',
-    title: 'Track Your\nProgress.',
-    body:
-      'Compare visible changes over time, follow improvements clearly, and stay motivated with progress you can actually see.',
-    cta: 'Celebrate Progress',
-    kind: 'progress',
-  },
-];
 
 const acneImage = require('../../assets/onboarding/acne2.jpeg');
 const creamImage = require('../../assets/onboarding/cream.jpeg');
@@ -91,14 +65,26 @@ function ScanIllustration({ compact }: { compact: boolean }) {
   );
 }
 
-function RegimenIllustration({ compact }: { compact: boolean }) {
+function RegimenIllustration({
+  compact,
+  labels,
+}: {
+  compact: boolean;
+  labels: {
+    targetedCare: string;
+    beautyTools: string;
+    cleanse: string;
+    treat: string;
+    protect: string;
+  };
+}) {
   return (
     <View className="flex-1 justify-center px-4 py-4">
       <View className="absolute left-6 top-4 rounded-pill bg-white/75 px-3 py-1.5">
-        <Text className="font-medium text-[11px] text-mist">Targeted Care</Text>
+        <Text className="font-medium text-[11px] text-mist">{labels.targetedCare}</Text>
       </View>
       <View className="absolute right-6 top-4 rounded-pill bg-white/75 px-3 py-1.5">
-        <Text className="font-medium text-[11px] text-mist">Beauty Tools</Text>
+        <Text className="font-medium text-[11px] text-mist">{labels.beautyTools}</Text>
       </View>
 
       <View className="mt-6 flex-row items-end justify-center gap-3">
@@ -121,13 +107,13 @@ function RegimenIllustration({ compact }: { compact: boolean }) {
 
       <View className="mt-4 flex-row justify-center gap-2">
         <View className="rounded-pill bg-white/70 px-3 py-1.5">
-          <Text className="font-medium text-[11px] text-mist">Cleanse</Text>
+          <Text className="font-medium text-[11px] text-mist">{labels.cleanse}</Text>
         </View>
         <View className="rounded-pill bg-white/70 px-3 py-1.5">
-          <Text className="font-medium text-[11px] text-mist">Treat</Text>
+          <Text className="font-medium text-[11px] text-mist">{labels.treat}</Text>
         </View>
         <View className="rounded-pill bg-white/70 px-3 py-1.5">
-          <Text className="font-medium text-[11px] text-mist">Protect</Text>
+          <Text className="font-medium text-[11px] text-mist">{labels.protect}</Text>
         </View>
       </View>
     </View>
@@ -168,16 +154,24 @@ function ProgressIllustration({ compact }: { compact: boolean }) {
 function SlideArt({
   kind,
   compact,
+  regimenLabels,
 }: {
   kind: Slide['kind'];
   compact: boolean;
+  regimenLabels: {
+    targetedCare: string;
+    beautyTools: string;
+    cleanse: string;
+    treat: string;
+    protect: string;
+  };
 }) {
   if (kind === 'scan') {
     return <ScanIllustration compact={compact} />;
   }
 
   if (kind === 'regimen') {
-    return <RegimenIllustration compact={compact} />;
+    return <RegimenIllustration compact={compact} labels={regimenLabels} />;
   }
 
   return <ProgressIllustration compact={compact} />;
@@ -188,11 +182,21 @@ function SlideCard({
   activeIndex,
   compact,
   onPressPrimary,
+  regimenLabels,
+  slideCount,
 }: {
   slide: Slide;
   activeIndex: number;
   compact: boolean;
   onPressPrimary: () => void;
+  regimenLabels: {
+    targetedCare: string;
+    beautyTools: string;
+    cleanse: string;
+    treat: string;
+    protect: string;
+  };
+  slideCount: number;
 }) {
   return (
     <View className="flex-1 justify-center px-5">
@@ -234,15 +238,19 @@ function SlideCard({
                 end={{ x: 1, y: 1 }}
                 style={{ flex: 1 }}
               >
-                <SlideArt kind={slide.kind} compact={compact} />
+                <SlideArt
+                  kind={slide.kind}
+                  compact={compact}
+                  regimenLabels={regimenLabels}
+                />
               </LinearGradient>
             </View>
 
             <View className="mt-6 items-center">
               <View className="mb-7 flex-row gap-2.5">
-                {slides.map((item, index) => (
+                {Array.from({ length: slideCount }).map((_, index) => (
                   <View
-                    key={item.id}
+                    key={`${slide.id}-dot-${index}`}
                     className={`h-1.5 rounded-full ${
                       index === activeIndex ? 'w-9 bg-blush' : 'w-2.5 bg-blush/25'
                     }`}
@@ -274,10 +282,41 @@ function SlideCard({
 }
 
 export default function OnboardingCarousel() {
+  const { t } = useI18n();
   const { width, height } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const compact = width < 390 || height < 800;
+  const slides: Slide[] = [
+    {
+      id: 'scan',
+      title: t('onboarding.scan.title'),
+      body: t('onboarding.scan.body'),
+      cta: t('onboarding.scan.cta'),
+      kind: 'scan',
+    },
+    {
+      id: 'regimen',
+      title: t('onboarding.regimen.title'),
+      body: t('onboarding.regimen.body'),
+      cta: t('onboarding.regimen.cta'),
+      kind: 'regimen',
+    },
+    {
+      id: 'progress',
+      title: t('onboarding.progress.title'),
+      body: t('onboarding.progress.body'),
+      cta: t('onboarding.progress.cta'),
+      kind: 'progress',
+    },
+  ];
+  const regimenLabels = {
+    targetedCare: t('onboarding.tag.targetedCare'),
+    beautyTools: t('onboarding.tag.beautyTools'),
+    cleanse: t('onboarding.tag.cleanse'),
+    treat: t('onboarding.tag.treat'),
+    protect: t('onboarding.tag.protect'),
+  };
 
   const handleMomentumEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     setActiveIndex(Math.round(event.nativeEvent.contentOffset.x / width));
@@ -300,7 +339,7 @@ export default function OnboardingCarousel() {
       <View className="flex-row justify-end px-6 pb-2 pt-4">
         <Pressable onPress={() => router.push('/(auth)/login')}>
           <Text className="font-medium text-xs uppercase tracking-[2px] text-mist">
-            Skip
+            {t('onboarding.skip')}
           </Text>
         </Pressable>
       </View>
@@ -321,6 +360,8 @@ export default function OnboardingCarousel() {
               activeIndex={activeIndex}
               compact={compact}
               onPressPrimary={handlePress}
+              regimenLabels={regimenLabels}
+              slideCount={slides.length}
             />
           </View>
         ))}
@@ -329,7 +370,8 @@ export default function OnboardingCarousel() {
       <View className="pb-10 pt-4">
         <Pressable onPress={() => router.push('/(auth)/login')}>
           <Text className="text-center font-medium text-sm text-mist">
-            Already a member? <Text className="text-roseDeep">Log In</Text>
+            {t('onboarding.alreadyMember')}{' '}
+            <Text className="text-roseDeep">{t('onboarding.logIn')}</Text>
           </Text>
         </Pressable>
       </View>

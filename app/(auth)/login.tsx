@@ -13,10 +13,12 @@ import { GradientScreen } from '@/components/ui/gradient-screen';
 import { Input } from '@/components/ui/input';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { useResponsiveLayout } from '@/components/ui/responsive';
+import { useI18n } from '@/lib/i18n';
 import { useAuthStore } from '@/stores/auth-store';
 
 export default function LoginScreen() {
   const layout = useResponsiveLayout();
+  const { t } = useI18n();
   const signIn = useAuthStore((state) => state.signIn);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,7 +35,7 @@ export default function LoginScreen() {
       if (error instanceof Error) {
         setError(error.message);
       } else {
-        setError('We could not sign you in with those details.');
+        setError(t('auth.login.errorDefault'));
       }
     } finally {
       setSubmitting(false);
@@ -66,25 +68,25 @@ export default function LoginScreen() {
           >
             <View style={{ width: '100%', maxWidth: layout.isTablet ? 760 : 640, gap: 28 }}>
               <SectionHeading
-                eyebrow="Welcome Back"
-                title="Continue your skin journey."
-                body="Sign in to view your subscription, start a new analysis, and track your latest results."
+                eyebrow={t('auth.login.eyebrow')}
+                title={t('auth.login.title')}
+                body={t('auth.login.body')}
               />
 
               <GlassCard>
                 <View className="gap-5">
                   <Input
-                    label="Email"
+                    label={t('auth.login.email')}
                     value={email}
                     onChangeText={setEmail}
-                    placeholder="you@example.com"
+                    placeholder={t('auth.login.emailPlaceholder')}
                     keyboardType="email-address"
                   />
                   <Input
-                    label="Password"
+                    label={t('auth.login.password')}
                     value={password}
                     onChangeText={setPassword}
-                    placeholder="Your password"
+                    placeholder={t('auth.login.passwordPlaceholder')}
                     secureTextEntry
                     showPasswordToggle
                   />
@@ -92,7 +94,7 @@ export default function LoginScreen() {
                     <Text className="font-sans text-sm text-roseDeep">{error}</Text>
                   ) : null}
                   <Button
-                    label={submitting ? 'Signing In...' : 'Sign In'}
+                    label={submitting ? t('auth.login.submitting') : t('auth.login.submit')}
                     onPress={() => void handleLogin()}
                     disabled={submitting}
                     style={{ borderRadius: 999 }}
@@ -104,12 +106,13 @@ export default function LoginScreen() {
             <View style={{ width: '100%', maxWidth: layout.isTablet ? 760 : 640, marginTop: 28, gap: 16 }}>
               <Link href="/(auth)/forgot-password" asChild>
                 <Text className="text-center font-medium text-sm text-charcoal">
-                  Forgot password?
+                  {t('auth.login.forgotPassword')}
                 </Text>
               </Link>
               <Link href="/(auth)/register" asChild>
                 <Text className="text-center font-medium text-sm text-charcoal">
-                  Don&apos;t have an account? <Text className="text-roseDeep">Create one</Text>
+                  {t('auth.login.noAccount')}{' '}
+                  <Text className="text-roseDeep">{t('auth.login.createOne')}</Text>
                 </Text>
               </Link>
             </View>

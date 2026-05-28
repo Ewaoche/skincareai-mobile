@@ -13,10 +13,12 @@ import { GradientScreen } from '@/components/ui/gradient-screen';
 import { Input } from '@/components/ui/input';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { useResponsiveLayout } from '@/components/ui/responsive';
+import { useI18n } from '@/lib/i18n';
 import { useAuthStore } from '@/stores/auth-store';
 
 export default function RegisterScreen() {
   const layout = useResponsiveLayout();
+  const { t } = useI18n();
   const signUp = useAuthStore((state) => state.signUp);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -31,7 +33,7 @@ export default function RegisterScreen() {
       await signUp({ fullName, email, password });
       router.replace('/(app)/(tabs)/home');
     } catch {
-      setError('We could not create your account right now.');
+      setError(t('auth.register.errorDefault'));
     } finally {
       setSubmitting(false);
     }
@@ -63,32 +65,32 @@ export default function RegisterScreen() {
           >
             <View style={{ width: '100%', maxWidth: layout.isTablet ? 760 : 640, gap: 28 }}>
               <SectionHeading
-                eyebrow="Create Account"
-                title="Create your account"
-                body="Save your results, follow your progress, and get a more personalized experience."
+                eyebrow={t('auth.register.eyebrow')}
+                title={t('auth.register.title')}
+                body={t('auth.register.body')}
               />
 
               <GlassCard>
                 <View className="gap-5">
                   <Input
-                    label="Full name"
+                    label={t('auth.register.fullName')}
                     value={fullName}
                     onChangeText={setFullName}
-                    placeholder="Ada Lovelace"
+                    placeholder={t('auth.register.fullNamePlaceholder')}
                     autoCapitalize="words"
                   />
                   <Input
-                    label="Email"
+                    label={t('auth.register.email')}
                     value={email}
                     onChangeText={setEmail}
-                    placeholder="you@example.com"
+                    placeholder={t('auth.register.emailPlaceholder')}
                     keyboardType="email-address"
                   />
                   <Input
-                    label="Password"
+                    label={t('auth.register.password')}
                     value={password}
                     onChangeText={setPassword}
-                    placeholder="At least 8 characters"
+                    placeholder={t('auth.register.passwordPlaceholder')}
                     secureTextEntry
                     showPasswordToggle
                   />
@@ -96,7 +98,11 @@ export default function RegisterScreen() {
                     <Text className="font-sans text-sm text-roseDeep">{error}</Text>
                   ) : null}
                   <Button
-                    label={submitting ? 'Creating Account...' : 'Create Account'}
+                    label={
+                      submitting
+                        ? t('auth.register.submitting')
+                        : t('auth.register.submit')
+                    }
                     onPress={() => void handleRegister()}
                     disabled={submitting}
                     style={{ borderRadius: 999 }}
@@ -108,7 +114,8 @@ export default function RegisterScreen() {
             <View style={{ width: '100%', maxWidth: layout.isTablet ? 760 : 640, marginTop: 28 }}>
               <Link href="/(auth)/login" asChild>
                 <Text className="text-center font-medium text-sm text-charcoal">
-                  Already have an account? <Text className="text-roseDeep">Sign in</Text>
+                  {t('auth.register.haveAccount')}{' '}
+                  <Text className="text-roseDeep">{t('auth.register.signIn')}</Text>
                 </Text>
               </Link>
             </View>

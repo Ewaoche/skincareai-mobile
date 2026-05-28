@@ -6,28 +6,31 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { GradientScreen } from '@/components/ui/gradient-screen';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { syncSubscription } from '@/lib/api/subscriptions-api';
+import { useI18n } from '@/lib/i18n';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 
 function formatSuccessMessage(input: {
+  t: ReturnType<typeof useI18n>['t'];
   plan?: string | null;
   status?: string | null;
 }): string {
   if (input.plan === 'PREMIUM' && input.status === 'ACTIVE') {
-    return 'Your Premium subscription is active and ready to use.';
+    return input.t('billing.success.active');
   }
 
   if (input.status === 'PAST_DUE') {
-    return 'Your payment still needs attention before Premium can continue normally.';
+    return input.t('billing.success.pastDue');
   }
 
   if (input.status === 'INCOMPLETE') {
-    return 'Your subscription setup is not complete yet. Open your subscription page to continue.';
+    return input.t('billing.success.incomplete');
   }
 
-  return 'Your billing update was received successfully. Open your subscription page to review the latest status.';
+  return input.t('billing.success.updated');
 }
 
 export default function BillingSuccessScreen() {
+  const { t } = useI18n();
   const refresh = useSubscriptionStore((state) => state.refresh);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(true);
@@ -52,6 +55,7 @@ export default function BillingSuccessScreen() {
           if (current) {
             setMessage(
               formatSuccessMessage({
+                t,
                 plan: current.plan,
                 status: current.status,
               }),
@@ -76,7 +80,7 @@ export default function BillingSuccessScreen() {
       if (!cancelled) {
         setConfirming(false);
         setError(
-          'We are still confirming your subscription. Please check your subscription page again in a moment.',
+          t('billing.success.pending'),
         );
       }
     };
@@ -86,7 +90,7 @@ export default function BillingSuccessScreen() {
     return () => {
       cancelled = true;
     };
-  }, [refresh]);
+  }, [refresh, t]);
 
   return (
     <GradientScreen>
@@ -94,29 +98,28 @@ export default function BillingSuccessScreen() {
         <GlassCard>
           <View className="gap-5">
             <SectionHeading
-              eyebrow="Billing Success"
-              title="Confirming your subscription"
-              body="We are checking your latest billing update now."
+              eyebrow={t('billing.success.eyebrow')}
+              title={t('billing.success.title')}
+              body={t('billing.success.body')}
             />
 
             {confirming ? (
               <View className="gap-3">
                 <ActivityIndicator color="#D96B8C" />
                 <Text className="font-sans text-sm text-mist">
-                  Updating your subscription details...
+                  {t('billing.success.loading')}
                 </Text>
               </View>
             ) : error ? (
               <Text className="font-sans text-sm text-roseDeep">{error}</Text>
             ) : (
               <Text className="font-sans text-sm text-mist">
-                {message ??
-                  'Your subscription has been confirmed. You can continue using the app with your updated plan.'}
+                {message ?? t('billing.success.default')}
               </Text>
             )}
 
             <Button
-              label="Open Subscription"
+              label={t('billing.openSubscription')}
               onPress={() =>
                 router.replace({
                   pathname: '/subscription' as never,
@@ -124,7 +127,7 @@ export default function BillingSuccessScreen() {
               }
             />
             <Button
-              label="Return Home"
+              label={t('billing.returnHome')}
               variant="secondary"
               onPress={() => router.replace('/(app)/(tabs)/home')}
             />

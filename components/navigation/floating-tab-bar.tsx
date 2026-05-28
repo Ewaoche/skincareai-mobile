@@ -4,12 +4,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsiveLayout } from '@/components/ui/responsive';
+import { useI18n } from '@/lib/i18n';
+import { TranslationKey } from '@/lib/i18n/types';
 
-const labels: Record<string, string> = {
-  home: 'Home',
-  analysis: 'Scan',
-  history: 'History',
-  profile: 'Profile',
+const labelKeys: Record<string, TranslationKey> = {
+  home: 'tabs.home',
+  analysis: 'tabs.analysis',
+  history: 'tabs.history',
+  profile: 'tabs.profile',
 };
 
 function TabIcon({
@@ -112,6 +114,7 @@ export function FloatingTabBar({
   state,
   navigation,
 }: BottomTabBarProps) {
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const layout = useResponsiveLayout();
   const frameWidth = layout.isLargeTablet
@@ -147,7 +150,8 @@ export function FloatingTabBar({
           >
             {state.routes.map((route, index) => {
               const isFocused = state.index === index;
-              const label = labels[route.name] ?? route.name;
+              const labelKey = labelKeys[route.name];
+              const label = labelKey ? t(labelKey) : route.name;
               const onPress = () => {
                 const event = navigation.emit({
                   type: 'tabPress',

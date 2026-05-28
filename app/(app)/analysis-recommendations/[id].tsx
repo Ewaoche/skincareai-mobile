@@ -16,8 +16,10 @@ import {
   AnalysisRecommendationItem,
   getAnalysisRecommendations,
 } from '@/lib/api/analysis-api';
+import { useI18n } from '@/lib/i18n';
 
 export default function AnalysisRecommendationsScreen() {
+  const { t } = useI18n();
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const analysisId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [items, setItems] = useState<AnalysisRecommendationItem[]>([]);
@@ -26,7 +28,7 @@ export default function AnalysisRecommendationsScreen() {
 
   useEffect(() => {
     if (!analysisId) {
-      setError('The analysis identifier is missing.');
+      setError(t('recommendations.missingId'));
       setLoading(false);
       return;
     }
@@ -38,14 +40,14 @@ export default function AnalysisRecommendationsScreen() {
         const response = await getAnalysisRecommendations(analysisId);
         setItems(response.items);
       } catch {
-        setError('We could not load recommendations for this analysis right now.');
+        setError(t('recommendations.loadError'));
       } finally {
         setLoading(false);
       }
     };
 
     void loadRecommendations();
-  }, [analysisId]);
+  }, [analysisId, t]);
 
   return (
     <GradientScreen>
@@ -56,9 +58,9 @@ export default function AnalysisRecommendationsScreen() {
       >
         <View className="gap-6 px-6 pt-6">
           <SectionHeading
-            eyebrow="Recommendations"
-            title="Products matched to your results"
-            body="These recommendations are selected to support the areas highlighted in your latest analysis."
+            eyebrow={t('recommendations.eyebrow')}
+            title={t('recommendations.title')}
+            body={t('recommendations.body')}
           />
 
           {loading ? (
@@ -70,7 +72,7 @@ export default function AnalysisRecommendationsScreen() {
               <View className="gap-4">
                 <Text className="font-sans text-sm text-roseDeep">{error}</Text>
                 <Button
-                  label="Back to Result"
+                  label={t('recommendations.backResult')}
                   variant="secondary"
                   onPress={() => router.back()}
                 />
@@ -79,7 +81,7 @@ export default function AnalysisRecommendationsScreen() {
           ) : items.length === 0 ? (
             <GlassCard>
               <Text className="font-sans text-base leading-7 text-mist">
-                We do not have matching product recommendations for this result yet. Please check back again after your next analysis.
+                {t('recommendations.empty')}
               </Text>
             </GlassCard>
           ) : (
@@ -89,7 +91,10 @@ export default function AnalysisRecommendationsScreen() {
                   <View className="flex-row items-start justify-between gap-4">
                     <View className="flex-1 gap-1">
                       <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                        {`Rank ${item.rank} - ${item.targetConcern}`}
+                        {t('recommendations.rankConcern', {
+                          rank: item.rank,
+                          concern: item.targetConcern,
+                        })}
                       </Text>
                       <Text className="font-bold text-xl text-charcoal">
                         {item.name}
@@ -100,7 +105,7 @@ export default function AnalysisRecommendationsScreen() {
                     </View>
                     {item.priceEur ? (
                       <Text className="font-extra text-lg text-charcoal">
-                        {`€${item.priceEur}`}
+                        {t('common.priceEur', { price: item.priceEur })}
                       </Text>
                     ) : null}
                   </View>
@@ -115,7 +120,7 @@ export default function AnalysisRecommendationsScreen() {
 
                   <View className="gap-2 rounded-[22px] bg-white/70 px-4 py-4">
                     <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                      Why it was selected
+                      {t('recommendations.whySelected')}
                     </Text>
                     <Text className="font-sans text-base leading-7 text-mist">
                       {item.reasoningSummary}
@@ -138,7 +143,7 @@ export default function AnalysisRecommendationsScreen() {
                   </View>
 
                   <Button
-                    label="Buy Now"
+                    label={t('recommendations.buyNow')}
                     onPress={() => {
                       void Linking.openURL(item.buyUrl);
                     }}

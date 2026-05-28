@@ -4,14 +4,18 @@ import { router } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { GradientScreen } from '@/components/ui/gradient-screen';
+import { LanguageToggle } from '@/components/ui/language-toggle';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { useAnalysisStore } from '@/stores/analysis-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 import { ResponsiveScrollScreen, useResponsiveLayout } from '@/components/ui/responsive';
+import { useI18n } from '@/lib/i18n';
+import { AppLanguage, TranslationKey } from '@/lib/i18n/types';
 
 export default function ProfileScreen() {
   const layout = useResponsiveLayout();
+  const { language, setLanguage, t } = useI18n();
   const user = useAuthStore((state) => state.user);
   const signOut = useAuthStore((state) => state.signOut);
   const currentSubscription = useSubscriptionStore((state) => state.current);
@@ -46,22 +50,36 @@ export default function ProfileScreen() {
     user?.email;
 
   const renewalLabel = formatDate(
+    language,
     currentSubscription?.cancelAtPeriodEnd
       ? currentSubscription.currentPeriodEnd ?? currentSubscription.renewsAt
       : currentSubscription?.renewsAt,
   );
   const statusLabel = formatSubscriptionStatus({
+    t,
     status: currentSubscription?.status,
     cancelAtPeriodEnd: currentSubscription?.cancelAtPeriodEnd,
   });
+  const languageOptions = [
+    {
+      code: 'en' as const,
+      label: t('profile.language.english'),
+      shortLabel: 'EN',
+    },
+    {
+      code: 'el' as const,
+      label: t('profile.language.greek'),
+      shortLabel: 'EL',
+    },
+  ];
 
   return (
     <GradientScreen>
       <ResponsiveScrollScreen topPadding={18} bottomPadding={layout.tabBarHeight + 64} gap={18}>
         <SectionHeading
-          eyebrow="Profile"
-          title="Your profile"
-          body="Manage your account, subscription, and personal details in one place."
+          eyebrow={t('profile.eyebrow')}
+          title={t('profile.title')}
+          body={t('profile.body')}
         />
 
         <GlassCard>
@@ -95,7 +113,7 @@ export default function ProfileScreen() {
                   {displayName ?? 'Your account'}
                 </Text>
                 <Text className="font-sans text-base text-mist">
-                  Your signed-in account
+                  {t('profile.account.signedIn')}
                 </Text>
               </View>
             </View>
@@ -105,7 +123,7 @@ export default function ProfileScreen() {
         <GlassCard>
           <View style={{ gap: 18 }}>
             <Text className="font-bold text-lg text-charcoal">
-              Subscription
+              {t('profile.subscription.title')}
             </Text>
             {currentSubscription && subscriptionUsage ? (
               <View
@@ -116,7 +134,7 @@ export default function ProfileScreen() {
               >
                 <View className="rounded-[24px] border border-white/70 bg-white/60 px-4 py-4" style={{ flex: 1 }}>
                   <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                    Current plan
+                    {t('profile.subscription.currentPlan')}
                   </Text>
                   <Text className="mt-2 font-bold text-lg text-charcoal">
                     {currentSubscription.plan}
@@ -127,13 +145,18 @@ export default function ProfileScreen() {
                 </View>
                 <View className="rounded-[24px] border border-white/70 bg-white/60 px-4 py-4" style={{ flex: 1 }}>
                   <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                    Usage
+                    {t('profile.subscription.usage')}
                   </Text>
                   <Text className="mt-2 font-bold text-lg text-charcoal">
-                    {subscriptionUsage.remainingAnalyses} remaining
+                    {t('profile.subscription.remaining', {
+                      count: subscriptionUsage.remainingAnalyses,
+                    })}
                   </Text>
                   <Text className="mt-2 font-sans text-sm leading-6 text-mist">
-                    {subscriptionUsage.analysesUsed} of {subscriptionUsage.analysesLimit} used
+                    {t('profile.subscription.used', {
+                      used: subscriptionUsage.analysesUsed,
+                      limit: subscriptionUsage.analysesLimit,
+                    })}
                   </Text>
                 </View>
               </View>
@@ -148,21 +171,23 @@ export default function ProfileScreen() {
             {renewalLabel ? (
               <View className="rounded-[24px] border border-white/70 bg-white/60 px-4 py-4">
                 <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                  {currentSubscription?.cancelAtPeriodEnd ? 'Access ends' : 'Renewal date'}
+                  {currentSubscription?.cancelAtPeriodEnd
+                    ? t('profile.subscription.accessEnds')
+                    : t('profile.subscription.renewalDate')}
                 </Text>
                 <Text className="mt-2 font-bold text-lg text-charcoal">
                   {renewalLabel}
                 </Text>
                 <Text className="mt-2 font-sans text-sm leading-6 text-mist">
                   {currentSubscription?.cancelAtPeriodEnd
-                    ? 'Your subscription will stay active until this date.'
-                    : 'Your current plan renews on this date.'}
+                    ? t('profile.subscription.accessEndsBody')
+                    : t('profile.subscription.renewalBody')}
                 </Text>
               </View>
             ) : null}
 
             <Button
-              label="Manage Subscription"
+              label={t('profile.subscription.manageButton')}
               variant="secondary"
               onPress={() =>
                 router.push({
@@ -176,7 +201,7 @@ export default function ProfileScreen() {
         <GlassCard>
           <View style={{ gap: 18 }}>
             <Text className="font-bold text-lg text-charcoal">
-              Account
+              {t('profile.account.title')}
             </Text>
             <View
               style={{
@@ -186,37 +211,53 @@ export default function ProfileScreen() {
             >
               <View className="rounded-[24px] border border-white/70 bg-white/60 px-4 py-4" style={{ flex: 1 }}>
                 <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                  Contact email
+                  {t('profile.account.contactEmail')}
                 </Text>
                 <Text className="mt-2 font-bold text-lg text-charcoal">
-                  {user?.email ?? 'Not available'}
+                  {user?.email ?? t('profile.account.notAvailable')}
                 </Text>
               </View>
               <View className="rounded-[24px] border border-white/70 bg-white/60 px-4 py-4" style={{ flex: 1 }}>
                 <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                  Security
+                  {t('profile.account.security')}
                 </Text>
                 <Text className="mt-2 font-bold text-lg text-charcoal">
-                  Password access
+                  {t('profile.account.passwordAccess')}
                 </Text>
               </View>
             </View>
 
             <Button
-              label="Reset Password"
+              label={t('profile.account.resetPassword')}
               variant="secondary"
               onPress={() => router.push('/(auth)/forgot-password')}
             />
             <Button
-              label="View Analysis History"
+              label={t('profile.account.viewHistory')}
               variant="ghost"
               onPress={() => router.push('/(app)/(tabs)/history')}
             />
           </View>
         </GlassCard>
 
+        <GlassCard>
+          <View style={{ gap: 18 }}>
+            <Text className="font-bold text-lg text-charcoal">
+              {t('profile.language.title')}
+            </Text>
+            <Text className="font-sans text-sm leading-6 text-mist">
+              {t('profile.language.body')}
+            </Text>
+            <LanguageToggle
+              options={languageOptions}
+              value={language}
+              onChange={setLanguage}
+            />
+          </View>
+        </GlassCard>
+
         <Button
-          label="Log Out"
+          label={t('profile.actions.logout')}
           variant="secondary"
           onPress={() => {
             clearAnalysis();
@@ -229,34 +270,35 @@ export default function ProfileScreen() {
   );
 }
 
-function formatDate(date?: string | null): string | null {
+function formatDate(language: AppLanguage, date?: string | null): string | null {
   if (!date) {
     return null;
   }
 
-  return new Date(date).toLocaleDateString();
+  return new Date(date).toLocaleDateString(language);
 }
 
 function formatSubscriptionStatus(input: {
+  t: (key: TranslationKey) => string;
   status?: string | null;
   cancelAtPeriodEnd?: boolean;
 }): string {
   if (input.cancelAtPeriodEnd) {
-    return 'Cancels at period end';
+    return input.t('subscription.status.cancelAtPeriodEnd');
   }
 
   switch (input.status) {
     case 'ACTIVE':
-      return 'Active';
+      return input.t('subscription.status.active');
     case 'TRIAL':
-      return 'Trial';
+      return input.t('subscription.status.trial');
     case 'PAST_DUE':
-      return 'Payment past due';
+      return input.t('subscription.status.pastDue');
     case 'INCOMPLETE':
-      return 'Payment incomplete';
+      return input.t('subscription.status.incomplete');
     case 'EXPIRED':
-      return 'Expired';
+      return input.t('subscription.status.expired');
     default:
-      return input.status ?? 'Unknown';
+      return input.status ?? input.t('subscription.status.unknown');
   }
 }

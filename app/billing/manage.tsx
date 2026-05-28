@@ -6,35 +6,39 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { GradientScreen } from '@/components/ui/gradient-screen';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { syncSubscription } from '@/lib/api/subscriptions-api';
+import { useI18n } from '@/lib/i18n';
+import { AppLanguage, TranslationKey } from '@/lib/i18n/types';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 
 function formatSubscriptionStatus(input: {
+  t: (key: TranslationKey) => string;
   status?: string | null;
   cancelAtPeriodEnd?: boolean;
 }): string {
   if (input.cancelAtPeriodEnd) {
-    return 'Cancels at period end';
+    return input.t('subscription.status.cancelAtPeriodEnd');
   }
 
   switch (input.status) {
     case 'ACTIVE':
-      return 'Active';
+      return input.t('subscription.status.active');
     case 'TRIAL':
-      return 'Trial';
+      return input.t('subscription.status.trial');
     case 'CANCELLED':
-      return 'Cancels at period end';
+      return input.t('subscription.status.cancelled');
     case 'PAST_DUE':
-      return 'Payment past due';
+      return input.t('subscription.status.pastDue');
     case 'INCOMPLETE':
-      return 'Payment incomplete';
+      return input.t('subscription.status.incomplete');
     case 'EXPIRED':
-      return 'Expired';
+      return input.t('subscription.status.expired');
     default:
-      return input.status ?? 'Unknown';
+      return input.status ?? input.t('subscription.status.unknown');
   }
 }
 
 export default function BillingManageScreen() {
+  const { language, t } = useI18n();
   const refresh = useSubscriptionStore((state) => state.refresh);
   const current = useSubscriptionStore((state) => state.current);
   const [loading, setLoading] = useState(true);
@@ -60,14 +64,14 @@ export default function BillingManageScreen() {
           if (latest) {
             const accessEndsAt = latest.currentPeriodEnd ?? latest.renewsAt;
             const accessEndsAtLabel = accessEndsAt
-              ? new Date(accessEndsAt).toLocaleDateString()
+              ? new Date(accessEndsAt).toLocaleDateString(language)
               : null;
             setMessage(
               latest.cancelAtPeriodEnd
                 ? accessEndsAtLabel
-                  ? `Your subscription will end on ${accessEndsAtLabel}. You will continue to have access until then. No further renewal will be charged.`
-                  : 'Your subscription is scheduled to end at the close of the current billing period. You will continue to have access until then. No further renewal will be charged.'
-                : 'Your billing details have been updated.',
+                  ? t('subscription.message.cancelWithDate', { date: accessEndsAtLabel })
+                  : t('subscription.message.cancelNoDate')
+                : t('billing.manage.updated'),
             );
           }
 
@@ -83,7 +87,7 @@ export default function BillingManageScreen() {
       if (!cancelled) {
         setLoading(false);
         setError(
-          'We could not refresh your billing details right now. Please check your subscription page again shortly.',
+          t('billing.manage.pending'),
         );
       }
     };
@@ -93,7 +97,7 @@ export default function BillingManageScreen() {
     return () => {
       cancelled = true;
     };
-  }, [refresh]);
+  }, [language, refresh, t]);
 
   return (
     <GradientScreen>
@@ -101,16 +105,16 @@ export default function BillingManageScreen() {
         <GlassCard>
           <View className="gap-5">
             <SectionHeading
-              eyebrow="Billing Updated"
-              title="Your billing update is complete"
-              body="Your latest billing changes have been applied to your account."
+              eyebrow={t('billing.manage.eyebrow')}
+              title={t('billing.manage.title')}
+              body={t('billing.manage.body')}
             />
 
             {loading ? (
               <View className="gap-3">
                 <ActivityIndicator color="#D96B8C" />
                 <Text className="font-sans text-sm text-mist">
-                  Refreshing your billing details...
+                  {t('billing.manage.loading')}
                 </Text>
               </View>
             ) : error ? (
@@ -118,22 +122,27 @@ export default function BillingManageScreen() {
             ) : (
               <View className="gap-2">
                 <Text className="font-sans text-sm text-mist">
-                  {message ?? 'Your billing details have been refreshed.'}
+                  {message ?? t('billing.manage.default')}
                 </Text>
                 <Text className="font-sans text-sm text-mist">
-                  Current plan: {current?.plan ?? 'Unknown'}
+                  {t('billing.currentPlan', {
+                    plan: current?.plan ?? t('subscription.status.unknown'),
+                  })}
                 </Text>
                 <Text className="font-sans text-sm text-mist">
-                  Status: {formatSubscriptionStatus({
-                    status: current?.status,
-                    cancelAtPeriodEnd: current?.cancelAtPeriodEnd,
+                  {t('billing.currentStatus', {
+                    status: formatSubscriptionStatus({
+                      t,
+                      status: current?.status,
+                      cancelAtPeriodEnd: current?.cancelAtPeriodEnd,
+                    }),
                   })}
                 </Text>
               </View>
             )}
 
             <Button
-              label="Open Subscription"
+              label={t('billing.openSubscription')}
               onPress={() =>
                 router.replace({
                   pathname: '/subscription' as never,
@@ -141,7 +150,7 @@ export default function BillingManageScreen() {
               }
             />
             <Button
-              label="Return Home"
+              label={t('billing.returnHome')}
               variant="secondary"
               onPress={() => router.replace('/(app)/(tabs)/home')}
             />

@@ -13,9 +13,11 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { useAnalysisStore } from '@/stores/analysis-store';
 import { ResponsiveScrollScreen, useResponsiveLayout } from '@/components/ui/responsive';
+import { useI18n } from '@/lib/i18n';
 
 export default function AnalysisScreen() {
   const layout = useResponsiveLayout();
+  const { t } = useI18n();
   const latest = useAnalysisStore((state) => state.latest);
   const setPendingAsset = useAnalysisStore((state) => state.setPendingAsset);
   const submitError = useAnalysisStore((state) => state.submitError);
@@ -27,7 +29,7 @@ export default function AnalysisScreen() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      setScreenError('Photo library permission is required to choose a selfie.');
+      setScreenError(t('analysis.permissionLibrary'));
       return;
     }
 
@@ -47,7 +49,7 @@ export default function AnalysisScreen() {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
 
     if (!permission.granted) {
-      setScreenError('Camera permission is required to take a live selfie.');
+      setScreenError(t('analysis.permissionCamera'));
       return;
     }
 
@@ -65,7 +67,7 @@ export default function AnalysisScreen() {
 
   const handleSubmit = async () => {
     if (!asset) {
-      setScreenError('Choose or capture a selfie before starting analysis.');
+      setScreenError(t('analysis.chooseBeforeStart'));
       return;
     }
 
@@ -83,9 +85,9 @@ export default function AnalysisScreen() {
     <GradientScreen>
       <ResponsiveScrollScreen topPadding={18} bottomPadding={layout.tabBarHeight + 64} gap={18}>
           <SectionHeading
-            eyebrow="Analysis"
-            title="Start a new skin analysis"
-            body="Take a clear, well-lit photo or choose one from your library to get your latest results."
+            eyebrow={t('analysis.eyebrow')}
+            title={t('analysis.title')}
+            body={t('analysis.body')}
           />
 
           <GlassCard>
@@ -103,7 +105,7 @@ export default function AnalysisScreen() {
                   style={{ height: layout.isTablet ? 420 : 260 }}
                 >
                   <Text className="text-center font-sans text-base leading-7 text-mist">
-                    Choose a clear, front-facing photo with one face visible.
+                    {t('analysis.emptyState')}
                   </Text>
                 </View>
               )}
@@ -117,21 +119,21 @@ export default function AnalysisScreen() {
               >
                 <View style={{ flex: layout.isTablet ? 1 : undefined, minWidth: layout.isTablet ? 220 : undefined }}>
                 <Button
-                  label="Take Selfie"
+                  label={t('analysis.takeSelfie')}
                   variant="secondary"
                   onPress={() => void handleCameraPick()}
                 />
                 </View>
                 <View style={{ flex: layout.isTablet ? 1 : undefined, minWidth: layout.isTablet ? 220 : undefined }}>
                 <Button
-                  label="Choose From Library"
+                  label={t('analysis.chooseLibrary')}
                   variant="secondary"
                   onPress={() => void handleLibraryPick()}
                 />
                 </View>
                 <View style={{ width: '100%' }}>
                 <Button
-                  label="Start Analysis"
+                  label={t('analysis.start')}
                   onPress={() => void handleSubmit()}
                 />
                 </View>
@@ -149,11 +151,11 @@ export default function AnalysisScreen() {
             <GlassCard>
               <View className="gap-4">
                   <Text className="font-bold text-lg text-charcoal">
-                    Most recent scores
+                    {t('analysis.recentScores')}
                   </Text>
                 <AnalysisScoreGrid scores={latest.scores} />
                 <Button
-                  label="Open Latest Result"
+                  label={t('analysis.openLatest')}
                   variant="ghost"
                   onPress={() =>
                     router.push({

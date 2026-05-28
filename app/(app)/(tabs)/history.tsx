@@ -24,9 +24,12 @@ import {
   getWeakestConcerns,
 } from '@/lib/analysis/score-insights';
 import { AnalysisResult, getAnalysisHistory } from '@/lib/api/analysis-api';
+import { useI18n } from '@/lib/i18n';
+import { AppLanguage } from '@/lib/i18n/types';
 
 export default function HistoryScreen() {
   const layout = useResponsiveLayout();
+  const { language, t } = useI18n();
   const [items, setItems] = useState<AnalysisResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +42,7 @@ export default function HistoryScreen() {
       const response = await getAnalysisHistory({ page: 1, limit: 10 });
       setItems(response.items);
     } catch {
-      setError('We could not load your analysis history right now.');
+      setError(t('history.errorDefault'));
     } finally {
       setLoading(false);
     }
@@ -62,16 +65,16 @@ export default function HistoryScreen() {
 
   const metricOptions = useMemo<ProgressMetricOption[]>(
     () => [
-      { key: 'overall', label: 'Overall' },
-      { key: 'acne', label: 'Acne' },
-      { key: 'pigmentation', label: 'Pigment' },
-      { key: 'skinTone', label: 'Tone' },
-      { key: 'pores', label: 'Pores' },
-      { key: 'moisture', label: 'Moisture' },
-      { key: 'oiliness', label: 'Oiliness' },
-      { key: 'wrinkles', label: 'Wrinkles' },
+      { key: 'overall', label: t('history.metric.overall') },
+      { key: 'acne', label: t('history.metric.acne') },
+      { key: 'pigmentation', label: t('history.metric.pigmentation') },
+      { key: 'skinTone', label: t('history.metric.skinTone') },
+      { key: 'pores', label: t('history.metric.pores') },
+      { key: 'moisture', label: t('history.metric.moisture') },
+      { key: 'oiliness', label: t('history.metric.oiliness') },
+      { key: 'wrinkles', label: t('history.metric.wrinkles') },
     ],
-    [],
+    [t],
   );
 
   const progressData = useMemo(() => {
@@ -83,25 +86,30 @@ export default function HistoryScreen() {
           : item.scores[selectedMetric as keyof AnalysisResult['scores']];
 
       return {
-        label: date.toLocaleDateString(),
-        shortLabel: date.toLocaleDateString(undefined, {
+        label: date.toLocaleDateString(language),
+        shortLabel: date.toLocaleDateString(language, {
           month: 'short',
           day: 'numeric',
         }),
         value,
       };
     });
-  }, [selectedMetric, timelineItems]);
+  }, [language, selectedMetric, timelineItems]);
 
   const progressSummary = useMemo(() => {
+    const selectedMetricLabel =
+      selectedMetric === 'overall'
+        ? t('history.metric.overall').toLowerCase()
+        : metricOptions.find((option) => option.key === selectedMetric)?.label?.toLowerCase() ??
+          t('history.metric.overall').toLowerCase();
+
     if (progressData.length === 0) {
       return {
         latestValue: null,
         deltaValue: null,
         percentChange: null,
         elapsedLabel: null,
-        deltaLabel:
-          'Complete more analyses to see how your skin changes over time.',
+        deltaLabel: t('history.summary.noTrend'),
       };
     }
 
@@ -117,7 +125,7 @@ export default function HistoryScreen() {
         : Math.round((((latest - first) / Math.max(first, 1)) * 100) * 10) / 10;
     const elapsedLabel =
       firstItem && latestItem
-        ? formatElapsedTime(firstItem.capturedAt, latestItem.capturedAt)
+        ? formatElapsedTime(firstItem.capturedAt, latestItem.capturedAt, language)
         : null;
 
     return {
@@ -127,14 +135,22 @@ export default function HistoryScreen() {
       elapsedLabel,
       deltaLabel:
         deltaValue === null
-          ? 'Complete more analyses to see how your skin changes over time.'
+          ? t('history.summary.noTrend')
           : deltaValue > 0
-            ? 'Your results are moving in a positive direction. Keep tracking to build a clearer view of your progress.'
+            ? t('history.summary.improved', {
+                label: selectedMetricLabel,
+                percent: Math.abs(percentChange ?? 0),
+                elapsed: elapsedLabel ?? '',
+              })
             : deltaValue < 0
-              ? 'This area needs a little more attention. A follow-up analysis can help you track what changes next.'
-              : 'This area is steady right now. Keep tracking to see how your routine develops over time.',
+              ? t('history.summary.decreased', {
+                  label: selectedMetricLabel,
+                  percent: Math.abs(percentChange ?? 0),
+                  elapsed: elapsedLabel ?? '',
+                })
+              : t('history.summary.noTrend'),
     };
-  }, [progressData, timelineItems]);
+  }, [language, metricOptions, progressData, selectedMetric, t, timelineItems]);
 
   const latestWeakConcern = items[0]
     ? getWeakestConcerns(items[0].scores, 1)[0] ?? null
@@ -171,15 +187,15 @@ export default function HistoryScreen() {
             }}
           >
             <SectionHeading
-              eyebrow="History"
-              title="Your skin history"
-              body="See how your results change over time and keep track of your progress."
+              eyebrow={t('history.eyebrow')}
+              title={t('history.title')}
+              body={t('history.body')}
             />
 
             {!loading && !error ? (
               <ProgressChartCard
-                title="Progress over time"
-                description="Track one area at a time and see how your results are changing."
+                title={t('history.progressTitle')}
+                description={t('history.progressBody')}
                 options={metricOptions}
                 selectedKey={selectedMetric}
                 onSelect={setSelectedMetric}
@@ -194,7 +210,7 @@ export default function HistoryScreen() {
               <GlassCard>
                 <View className="gap-4">
                   <Text className="font-bold text-lg text-charcoal">
-                    Progress summary
+                    {t('history.summaryTitle')}
                   </Text>
                   <Text className="font-sans text-base leading-7 text-mist">
                     {progressSummary.percentChange !== null &&
@@ -206,12 +222,15 @@ export default function HistoryScreen() {
                           progressSummary.elapsedLabel
                         ? `Your ${selectedMetric === 'overall' ? 'overall skin score' : metricOptions.find((option) => option.key === selectedMetric)?.label?.toLowerCase() ?? 'selected metric'} decreased by ${Math.abs(progressSummary.percentChange)}% in ${progressSummary.elapsedLabel}. A follow-up analysis can help you see what changes next.`
                       : latestWeakConcern
-                        ? `Your lowest scoring area right now is ${latestWeakConcern.label.toLowerCase()} at ${latestWeakConcern.score}. Keep tracking regularly to see how it changes over time.`
-                        : 'Keep tracking regularly to build a clearer picture of your skin over time.'}
+                        ? t('history.summary.lowest', {
+                            label: latestWeakConcern.label.toLowerCase(),
+                            score: latestWeakConcern.score,
+                          })
+                        : t('history.summary.noTrend')}
                   </Text>
                   {items.length > 1 ? (
                     <Button
-                      label="Compare First vs Latest"
+                      label={t('history.summary.compare')}
                       variant="secondary"
                       onPress={() => router.push('/progress-comparison' as never)}
                     />
@@ -227,14 +246,14 @@ export default function HistoryScreen() {
                 <View className="gap-4">
                   <Text className="font-sans text-sm text-roseDeep">{error}</Text>
                   <Button
-                    label="Try Again"
+                    label={t('history.tryAgain')}
                     variant="secondary"
                     onPress={() => void loadHistory()}
                   />
                 </View>
               ) : items.length === 0 ? (
                 <Text className="font-sans text-base leading-7 text-mist">
-                  Your completed analyses will appear here after your first successful upload.
+                  {t('history.empty')}
                 </Text>
               ) : (
                 <View className="gap-4">
@@ -260,15 +279,18 @@ export default function HistoryScreen() {
                       >
                         <View style={{ flex: 1 }}>
                           <Text className="font-bold text-base text-charcoal">
-                            {new Date(item.capturedAt).toLocaleString()}
+                            {new Date(item.capturedAt).toLocaleString(language)}
                           </Text>
                           <Text className="mt-1 font-sans text-sm text-mist">
-                            {`Average ${getAverageScore(item.scores)} - Grade ${getOverallGrade(item.scores)}`}
+                            {t('history.averageGrade', {
+                              average: getAverageScore(item.scores),
+                              grade: getOverallGrade(item.scores),
+                            })}
                           </Text>
                         </View>
                         <View className="rounded-pill bg-charcoal px-3 py-2">
                           <Text className="font-medium text-xs uppercase tracking-[1.4px] text-white">
-                            View Report
+                            {t('history.viewReport')}
                           </Text>
                         </View>
                       </View>
@@ -285,25 +307,41 @@ export default function HistoryScreen() {
   );
 }
 
-function formatElapsedTime(start: string, end: string): string {
+function formatElapsedTime(
+  start: string,
+  end: string,
+  language: AppLanguage,
+): string {
   const startTime = new Date(start).getTime();
   const endTime = new Date(end).getTime();
 
   if (!Number.isFinite(startTime) || !Number.isFinite(endTime) || endTime <= startTime) {
-    return 'your recent timeline';
+    return language === 'el' ? 'το πρόσφατο χρονικό σας διάστημα' : 'your recent timeline';
   }
 
   const diffDays = Math.max(Math.round((endTime - startTime) / (1000 * 60 * 60 * 24)), 1);
 
   if (diffDays < 14) {
+    if (language === 'el') {
+      return diffDays === 1 ? '1 ημέρα' : `${diffDays} ημέρες`;
+    }
+
     return `${diffDays} day${diffDays === 1 ? '' : 's'}`;
   }
 
   if (diffDays < 60) {
     const weeks = Math.max(Math.round(diffDays / 7), 1);
+    if (language === 'el') {
+      return weeks === 1 ? '1 εβδομάδα' : `${weeks} εβδομάδες`;
+    }
+
     return `${weeks} week${weeks === 1 ? '' : 's'}`;
   }
 
   const months = Math.max(Math.round(diffDays / 30), 1);
+  if (language === 'el') {
+    return months === 1 ? '1 μήνα' : `${months} μήνες`;
+  }
+
   return `${months} month${months === 1 ? '' : 's'}`;
 }

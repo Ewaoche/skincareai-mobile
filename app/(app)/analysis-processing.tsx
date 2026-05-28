@@ -5,15 +5,11 @@ import { Button } from '@/components/ui/button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { GradientScreen } from '@/components/ui/gradient-screen';
 import { SectionHeading } from '@/components/ui/section-heading';
+import { useI18n } from '@/lib/i18n';
 import { useAnalysisStore } from '@/stores/analysis-store';
 
-const processingMessages = [
-  'Uploading your photo securely.',
-  'Reviewing your skin profile.',
-  'Preparing your results.',
-] as const;
-
 export default function AnalysisProcessingScreen() {
+  const { t } = useI18n();
   const pendingAsset = useAnalysisStore((state) => state.pendingAsset);
   const submitAnalysis = useAnalysisStore((state) => state.submitAnalysis);
   const setPendingAsset = useAnalysisStore((state) => state.setPendingAsset);
@@ -21,6 +17,11 @@ export default function AnalysisProcessingScreen() {
   const submitError = useAnalysisStore((state) => state.submitError);
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [didStart, setDidStart] = useState(false);
+  const processingMessages = [
+    t('processing.step.upload'),
+    t('processing.step.review'),
+    t('processing.step.prepare'),
+  ] as const;
 
   useEffect(() => {
     if (!submitting) {
@@ -60,7 +61,7 @@ export default function AnalysisProcessingScreen() {
 
   const body = useMemo(() => {
     if (!pendingAsset) {
-      return 'No photo is ready yet. Go back and choose a photo to continue.';
+      return t('processing.noPhoto');
     }
 
     if (submitError) {
@@ -68,16 +69,16 @@ export default function AnalysisProcessingScreen() {
     }
 
     return processingMessages[phaseIndex];
-  }, [pendingAsset, phaseIndex, submitError]);
+  }, [pendingAsset, phaseIndex, processingMessages, submitError, t]);
 
   return (
     <GradientScreen>
       <View className="flex-1 justify-center px-6 pb-10">
         <View className="gap-6">
           <SectionHeading
-            eyebrow="Processing"
-            title="Analyzing your photo"
-            body="This usually takes a short moment while we prepare your results."
+            eyebrow={t('processing.eyebrow')}
+            title={t('processing.title')}
+            body={t('processing.body')}
           />
 
           <GlassCard>
@@ -95,7 +96,7 @@ export default function AnalysisProcessingScreen() {
           {submitError || !pendingAsset ? (
             <View className="gap-3">
               <Button
-                label="Back to Analysis"
+                label={t('processing.backAnalysis')}
                 variant="secondary"
                 onPress={() => {
                   setPendingAsset(null);
@@ -104,7 +105,7 @@ export default function AnalysisProcessingScreen() {
               />
               {pendingAsset ? (
                 <Button
-                  label="Try Again"
+                  label={t('processing.tryAgain')}
                   onPress={() => {
                     setDidStart(false);
                     setPhaseIndex(0);

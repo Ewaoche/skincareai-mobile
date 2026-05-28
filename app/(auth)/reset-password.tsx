@@ -14,9 +14,11 @@ import { GradientScreen } from '@/components/ui/gradient-screen';
 import { Input } from '@/components/ui/input';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { useResponsiveLayout } from '@/components/ui/responsive';
+import { useI18n } from '@/lib/i18n';
 
 export default function ResetPasswordScreen() {
   const layout = useResponsiveLayout();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
@@ -34,7 +36,7 @@ export default function ResetPasswordScreen() {
         router.replace('/(auth)/login');
       }, 900);
     } catch {
-      setError('We could not reset your password with those details.');
+      setError(t('auth.reset.errorDefault'));
     } finally {
       setSubmitting(false);
     }
@@ -66,32 +68,32 @@ export default function ResetPasswordScreen() {
           >
             <View style={{ width: '100%', maxWidth: layout.isTablet ? 760 : 640, gap: 28 }}>
               <SectionHeading
-                eyebrow="New Password"
-                title="Choose a new password"
-                body="Enter your email, verification code, and new password to regain access to your account."
+                eyebrow={t('auth.reset.eyebrow')}
+                title={t('auth.reset.title')}
+                body={t('auth.reset.body')}
               />
 
               <GlassCard>
                 <View className="gap-5">
                   <Input
-                    label="Email"
+                    label={t('auth.reset.email')}
                     value={email}
                     onChangeText={setEmail}
-                    placeholder="you@example.com"
+                    placeholder={t('auth.reset.emailPlaceholder')}
                     keyboardType="email-address"
                   />
                   <Input
-                    label="Verification code"
+                    label={t('auth.reset.code')}
                     value={otp}
                     onChangeText={setOtp}
-                    placeholder="123456"
+                    placeholder={t('auth.reset.codePlaceholder')}
                     keyboardType="numeric"
                   />
                   <Input
-                    label="New password"
+                    label={t('auth.reset.password')}
                     value={password}
                     onChangeText={setPassword}
-                    placeholder="At least 8 characters"
+                    placeholder={t('auth.reset.passwordPlaceholder')}
                     secureTextEntry
                     showPasswordToggle
                   />
@@ -102,7 +104,7 @@ export default function ResetPasswordScreen() {
                     <Text className="font-sans text-sm text-roseDeep">{error}</Text>
                   ) : null}
                   <Button
-                    label={submitting ? 'Resetting Password...' : 'Reset Password'}
+                    label={submitting ? t('auth.reset.submitting') : t('auth.reset.submit')}
                     onPress={() => void handleSubmit()}
                     disabled={submitting}
                     style={{ borderRadius: 999 }}
@@ -114,7 +116,8 @@ export default function ResetPasswordScreen() {
             <View style={{ width: '100%', maxWidth: layout.isTablet ? 760 : 640, marginTop: 28 }}>
               <Link href="/(auth)/login" asChild>
                 <Text className="text-center font-medium text-sm text-charcoal">
-                  Back to <Text className="text-roseDeep">login</Text>
+                  {t('auth.reset.backTo')}{' '}
+                  <Text className="text-roseDeep">{t('auth.reset.login')}</Text>
                 </Text>
               </Link>
             </View>

@@ -17,43 +17,48 @@ import {
   createCheckoutSession,
   getSubscriptionApiErrorMessage,
 } from '@/lib/api/subscriptions-api';
+import { useI18n } from '@/lib/i18n';
+import { AppLanguage, TranslationKey } from '@/lib/i18n/types';
 import { useSubscriptionStore } from '@/stores/subscription-store';
 
 function formatSubscriptionStatus(input: {
+  t: (key: TranslationKey) => string;
   status?: string | null;
   cancelAtPeriodEnd?: boolean;
 }): string {
   if (input.cancelAtPeriodEnd) {
-    return 'Cancels at period end';
+    return input.t('subscription.status.cancelAtPeriodEnd');
   }
 
   switch (input.status) {
     case 'ACTIVE':
-      return 'Active';
+      return input.t('subscription.status.active');
     case 'TRIAL':
-      return 'Trial';
+      return input.t('subscription.status.trial');
     case 'CANCELLED':
-      return 'Cancels at period end';
+      return input.t('subscription.status.cancelled');
     case 'PAST_DUE':
-      return 'Payment past due';
+      return input.t('subscription.status.pastDue');
     case 'INCOMPLETE':
-      return 'Payment incomplete';
+      return input.t('subscription.status.incomplete');
     case 'EXPIRED':
-      return 'Expired';
+      return input.t('subscription.status.expired');
     default:
-      return input.status ?? 'Unknown';
+      return input.status ?? input.t('subscription.status.unknown');
   }
 }
 
-function formatDate(date?: string | null): string | null {
+function formatDate(language: AppLanguage, date?: string | null): string | null {
   if (!date) {
     return null;
   }
 
-  return new Date(date).toLocaleDateString();
+  return new Date(date).toLocaleDateString(language);
 }
 
 function buildSubscriptionMessage(input: {
+  t: (key: TranslationKey, variables?: Record<string, string | number>) => string;
+  language: AppLanguage;
   status?: string | null;
   reason?: string | null;
   renewsAt?: string | null;
@@ -65,24 +70,27 @@ function buildSubscriptionMessage(input: {
   }
 
   if (input.cancelAtPeriodEnd) {
-    const accessEndsAt = formatDate(input.currentPeriodEnd ?? input.renewsAt);
+    const accessEndsAt = formatDate(
+      input.language,
+      input.currentPeriodEnd ?? input.renewsAt,
+    );
     if (accessEndsAt) {
-      return `Your subscription will end on ${accessEndsAt}. You will continue to have access until then. No further renewal will be charged.`;
+      return input.t('subscription.message.cancelWithDate', { date: accessEndsAt });
     }
 
-    return 'Your subscription is scheduled to end at the close of the current billing period. You will continue to have access until then. No further renewal will be charged.';
+    return input.t('subscription.message.cancelNoDate');
   }
 
   if (input.status === 'PAST_DUE') {
-    return 'We could not process your latest payment. Update your billing details to keep Premium access active.';
+    return input.t('subscription.message.pastDue');
   }
 
   if (input.status === 'INCOMPLETE') {
-    return 'Your subscription setup is not complete yet. Continue to billing to finish setting up Premium.';
+    return input.t('subscription.message.incomplete');
   }
 
   if (input.status === 'EXPIRED') {
-    return 'Your Premium access has ended. Start a new subscription to continue using Premium features.';
+    return input.t('subscription.message.expired');
   }
 
   return null;
@@ -97,6 +105,7 @@ function getStatusToneClassName(status?: string | null): string {
 }
 
 export default function SubscriptionScreen() {
+  const { language, t } = useI18n();
   const current = useSubscriptionStore((state) => state.current);
   const usage = useSubscriptionStore((state) => state.usage);
   const error = useSubscriptionStore((state) => state.error);
@@ -128,14 +137,16 @@ export default function SubscriptionScreen() {
     isFreePlan || isPastDue || isIncomplete || isExpired;
   const statusToneClassName = getStatusToneClassName(current?.status);
   const subscriptionMessage = buildSubscriptionMessage({
+    t,
+    language,
     status: current?.status,
     reason: usage?.reason ?? null,
     renewsAt: current?.renewsAt ?? null,
     currentPeriodEnd: current?.currentPeriodEnd ?? null,
     cancelAtPeriodEnd: current?.cancelAtPeriodEnd,
   });
-  const renewalDate = formatDate(current?.renewsAt);
-  const periodEndDate = formatDate(current?.currentPeriodEnd);
+  const renewalDate = formatDate(language, current?.renewsAt);
+  const periodEndDate = formatDate(language, current?.currentPeriodEnd);
 
   const handleUpgrade = async () => {
     try {
@@ -144,7 +155,7 @@ export default function SubscriptionScreen() {
       await Linking.openURL(session.checkoutUrl);
     } catch (checkoutError) {
       const message = getSubscriptionApiErrorMessage(checkoutError);
-      Alert.alert('Checkout unavailable', message);
+      Alert.alert(t('subscription.checkoutUnavailable'), message);
     } finally {
       setStartingCheckout(false);
     }
@@ -157,21 +168,21 @@ export default function SubscriptionScreen() {
       await Linking.openURL(portal.url);
     } catch (portalError) {
       const message = getSubscriptionApiErrorMessage(portalError);
-      Alert.alert('Billing unavailable', message);
+      Alert.alert(t('subscription.billingUnavailable'), message);
     } finally {
       setOpeningPortal(false);
     }
   };
 
   const checkoutButtonLabel = startingCheckout
-    ? 'Opening Checkout...'
+    ? t('subscription.openingCheckout')
     : isPastDue
-      ? 'Retry Payment'
+      ? t('subscription.retryPayment')
       : isIncomplete
-        ? 'Complete Checkout'
+        ? t('subscription.completeCheckout')
         : isExpired
-          ? 'Restore Premium'
-          : 'Upgrade to Premium';
+          ? t('subscription.restorePremium')
+          : t('subscription.upgradePremium');
 
   return (
     <GradientScreen>
@@ -182,15 +193,15 @@ export default function SubscriptionScreen() {
       >
         <View className="gap-6 px-6 pt-6">
           <SectionHeading
-            eyebrow="Subscription"
-            title="Manage your plan"
-            body="Review your plan, billing, and access in one place."
+            eyebrow={t('subscription.eyebrow')}
+            title={t('subscription.title')}
+            body={t('subscription.body')}
           />
 
           <GlassCard>
             <View className="gap-3">
               <Text className="font-medium text-sm uppercase tracking-[2px] text-roseDeep">
-                Current Plan
+                {t('subscription.currentPlan')}
               </Text>
               {current && usage ? (
                 <>
@@ -198,22 +209,25 @@ export default function SubscriptionScreen() {
                     {current.plan}
                   </Text>
                   <Text className="font-sans text-base text-mist">
-                    {usage.remainingAnalyses} analyses remaining
+                    {t('subscription.remaining', { count: usage.remainingAnalyses })}
                   </Text>
                   <Text className={statusToneClassName}>
-                    Status: {formatSubscriptionStatus({
-                      status: current.status,
-                      cancelAtPeriodEnd: current.cancelAtPeriodEnd,
+                    {t('subscription.statusLabel', {
+                      status: formatSubscriptionStatus({
+                        t,
+                        status: current.status,
+                        cancelAtPeriodEnd: current.cancelAtPeriodEnd,
+                      }),
                     })}
                   </Text>
                   {renewalDate ? (
                     <Text className="font-sans text-sm leading-6 text-mist">
-                      Renewal date: {renewalDate}
+                      {t('subscription.renewalDate', { date: renewalDate })}
                     </Text>
                   ) : null}
                   {periodEndDate && current?.cancelAtPeriodEnd ? (
                     <Text className="font-sans text-sm leading-6 text-mist">
-                      Access ends: {periodEndDate}
+                      {t('subscription.accessEnds', { date: periodEndDate })}
                     </Text>
                   ) : null}
                   {subscriptionMessage ? (
@@ -233,26 +247,26 @@ export default function SubscriptionScreen() {
           <GlassCard>
             <View className="gap-4">
               <Text className="font-bold text-xl text-charcoal">
-                Premium consumer plan
+                {t('subscription.premiumTitle')}
               </Text>
               <Text className="font-sans text-base leading-7 text-mist">
-                Premium gives you up to 4 analyses each month, with secure billing and easy subscription management.
+                {t('subscription.premiumBody')}
               </Text>
               <Text className="font-bold text-lg text-charcoal">
                 {premiumPrice}
               </Text>
               <View className="gap-2">
                 <Text className="font-sans text-sm leading-6 text-mist">
-                  Included:
+                  {t('subscription.included')}
                 </Text>
                 <Text className="font-sans text-sm leading-6 text-mist">
-                  - 4 analyses per month
+                  {t('subscription.included.analysis')}
                 </Text>
                 <Text className="font-sans text-sm leading-6 text-mist">
-                  - secure billing management
+                  {t('subscription.included.billing')}
                 </Text>
                 <Text className="font-sans text-sm leading-6 text-mist">
-                  - simple subscription updates in the app
+                  {t('subscription.included.updates')}
                 </Text>
               </View>
               {showCheckoutCta ? (
@@ -263,31 +277,31 @@ export default function SubscriptionScreen() {
                 />
               ) : null}
               <Button
-                label={openingPortal ? 'Opening Billing...' : 'Manage Billing'}
+                label={openingPortal ? t('subscription.openingBilling') : t('subscription.manageBilling')}
                 variant="secondary"
                 onPress={() => void handleManageBilling()}
                 disabled={openingPortal || !canManageBilling}
               />
               {isActivePremium && !isExhaustedPremium ? (
                 <Text className="font-sans text-sm leading-6 text-mist">
-                  Your Premium plan is active. You can update your payment method or manage cancellation at any time.
+                  {t('subscription.activeBody')}
                 </Text>
               ) : null}
               {isExhaustedPremium ? (
                 <Text className="font-sans text-sm leading-6 text-mist">
-                  You have used all analyses included in your current billing period. More analyses will be available on your renewal date.
+                  {t('subscription.exhaustedBody')}
                 </Text>
               ) : null}
               {!canManageBilling ? (
                 <Text className="font-sans text-sm leading-6 text-mist">
-                  Billing management will be available after your first successful subscription purchase.
+                  {t('subscription.noBillingBody')}
                 </Text>
               ) : null}
             </View>
           </GlassCard>
 
           <Button
-            label="Back to Home"
+            label={t('subscription.backHome')}
             variant="ghost"
             onPress={() => router.back()}
           />

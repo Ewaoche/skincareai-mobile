@@ -30,10 +30,13 @@ import {
   getAnalysisById,
   getApiErrorMessage,
 } from '@/lib/api/analysis-api';
+import { useI18n } from '@/lib/i18n';
+import { AppLanguage } from '@/lib/i18n/types';
 import { useAnalysisStore } from '@/stores/analysis-store';
 
 export default function AnalysisResultScreen() {
   const layout = useResponsiveLayout();
+  const { language, t } = useI18n();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const visualAnalysisOffsetRef = useRef(0);
   const params = useLocalSearchParams<{ id?: string | string[] }>();
@@ -101,7 +104,7 @@ export default function AnalysisResultScreen() {
       )
     : null;
   const selectedConcernInsight = selectedConcernMask
-    ? buildConcernInsight(selectedConcernMask.concern, selectedConcernScore)
+    ? buildConcernInsight(selectedConcernMask.concern, selectedConcernScore, language)
     : null;
   const activeVisualUri =
     selectedConcernMask?.urls[0] ?? analysis?.faceMapUrl ?? null;
@@ -116,7 +119,7 @@ export default function AnalysisResultScreen() {
 
   useEffect(() => {
     if (!analysisId) {
-      setError('The analysis identifier is missing.');
+      setError(t('result.missingId'));
       setLoading(false);
       return;
     }
@@ -133,14 +136,14 @@ export default function AnalysisResultScreen() {
         setAnalysis(result);
         setCurrent(result);
       } catch {
-        setError('We could not load this analysis result right now.');
+        setError(t('result.loadError'));
       } finally {
         setLoading(false);
       }
     };
 
     void loadAnalysis();
-  }, [analysis, analysisId, setCurrent]);
+  }, [analysis, analysisId, setCurrent, t]);
 
   useEffect(() => {
     if (!analysis) {
@@ -172,11 +175,11 @@ export default function AnalysisResultScreen() {
       const canShare = await Sharing.isAvailableAsync();
 
       if (!canShare) {
-        throw new Error('PDF sharing is not available on this device.');
+        throw new Error(t('result.pdfDeviceUnavailable'));
       }
 
       if (!result.pdf?.content) {
-        throw new Error('The exported PDF file was empty.');
+        throw new Error(t('result.pdfEmpty'));
       }
 
       const fileUri = `${FileSystem.cacheDirectory}${result.pdf.fileName}`;
@@ -187,15 +190,15 @@ export default function AnalysisResultScreen() {
       await Sharing.shareAsync(fileUri, {
         mimeType: result.pdf.mimeType,
         UTI: 'com.adobe.pdf',
-        dialogTitle: 'Share Skin Analysis Report',
+        dialogTitle: t('result.pdfShareTitle'),
       });
     } catch (exportPdfError) {
       const message =
         exportPdfError instanceof Error
           ? getApiErrorMessage(exportPdfError)
-          : 'We could not export this PDF right now.';
+          : t('result.pdfError');
       setExportError(message);
-      Alert.alert('PDF export unavailable', message);
+      Alert.alert(t('result.pdfUnavailable'), message);
     } finally {
       setExportingPdf(false);
     }
@@ -211,9 +214,9 @@ export default function AnalysisResultScreen() {
       >
         <View className="gap-6 px-6 pt-6">
           <SectionHeading
-            eyebrow="Result"
-            title="Your skin analysis"
-            body="Review your main focus areas, score breakdown, and visual highlights from your latest analysis."
+            eyebrow={t('result.eyebrow')}
+            title={t('result.title')}
+            body={t('result.body')}
           />
 
           {loading ? (
@@ -225,7 +228,7 @@ export default function AnalysisResultScreen() {
               <View className="gap-4">
                 <Text className="font-sans text-sm text-roseDeep">{error}</Text>
                 <Button
-                  label="Back to Analysis"
+                  label={t('result.backAnalysis')}
                   variant="secondary"
                   onPress={() => router.replace('/(app)/(tabs)/analysis')}
                 />
@@ -236,12 +239,12 @@ export default function AnalysisResultScreen() {
               <GlassCard>
                 <View className="gap-4">
                   <Text className="font-bold text-lg text-charcoal">
-                    Overview
+                    {t('result.overview')}
                   </Text>
                   <View className="flex-row items-end justify-between gap-4">
                     <View className="rounded-[24px] bg-white/70 px-5 py-4">
                       <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                        Overall Grade
+                        {t('result.overallGrade')}
                       </Text>
                       <Text className="mt-2 font-extra text-[40px] leading-[42px] text-charcoal">
                         {getOverallGrade(analysis.scores)}
@@ -249,7 +252,7 @@ export default function AnalysisResultScreen() {
                     </View>
                     <View className="flex-1 rounded-[24px] bg-white/70 px-5 py-4">
                       <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                        Average Score
+                        {t('result.averageScore')}
                       </Text>
                       <Text className="mt-2 font-extra text-[32px] leading-[36px] text-charcoal">
                         {getAverageScore(analysis.scores)}
@@ -270,13 +273,13 @@ export default function AnalysisResultScreen() {
                   }}
                 >
                   <Text className="font-bold text-lg text-charcoal">
-                    Visual analysis
+                    {t('result.visualAnalysis')}
                   </Text>
                   <View className="flex-row flex-wrap gap-3">
                     {[
-                      { key: 'original', label: 'Original' },
-                      { key: 'overlay', label: 'Overlay' },
-                      { key: 'blended', label: 'Blended' },
+                      { key: 'original', label: t('result.visual.original') },
+                      { key: 'overlay', label: t('result.visual.overlay') },
+                      { key: 'blended', label: t('result.visual.blended') },
                     ].map((option) => {
                       const active = visualMode === option.key;
                       const disabled =
@@ -363,7 +366,7 @@ export default function AnalysisResultScreen() {
                       <View className="flex-row items-center justify-between gap-3">
                         <View>
                           <Text className="font-medium text-xs uppercase tracking-[1.5px] text-roseDeep">
-                            Primary visible concern
+                            {t('result.primaryConcern')}
                           </Text>
                           <Text className="mt-1 font-bold text-lg text-charcoal">
                             {formatConcernName(selectedConcernMask.concern)}
@@ -377,23 +380,25 @@ export default function AnalysisResultScreen() {
                       </View>
                       <Text className="font-sans text-sm leading-6 text-mist">
                         {selectedConcernInsight ??
-                          'This overlay highlights the area connected to the selected concern.'}
+                          t('result.primaryFallback')}
                       </Text>
                       <Text className="font-sans text-xs leading-5 text-mist">
                         {visualMode === 'original'
-                          ? 'Original shows your photo without any visual highlights.'
+                          ? t('result.visual.originalBody')
                           : visualMode === 'overlay'
-                            ? 'Overlay shows the highlighted concern area on its own.'
-                            : 'Blended combines your photo with the selected concern highlight.'}
+                            ? t('result.visual.overlayBody')
+                            : t('result.visual.blendedBody')}
                       </Text>
                     </View>
                   ) : (
                     <Text className="font-sans text-sm leading-6 text-mist">
-                      Visual concern highlights are not available for this result, so your original photo is shown instead.
+                      {t('result.visualUnavailable')}
                     </Text>
                   )}
                   <Text className="font-sans text-sm text-mist">
-                    Captured {new Date(analysis.capturedAt).toLocaleString()}
+                    {t('result.captured', {
+                      date: new Date(analysis.capturedAt).toLocaleString(language),
+                    })}
                   </Text>
                 </View>
               </GlassCard>
@@ -401,7 +406,7 @@ export default function AnalysisResultScreen() {
               <GlassCard>
                 <View className="gap-4">
                   <Text className="font-bold text-lg text-charcoal">
-                    Skin scores
+                    {t('result.skinScores')}
                   </Text>
                   <AnalysisScoreGrid scores={analysis.scores} />
                 </View>
@@ -410,7 +415,7 @@ export default function AnalysisResultScreen() {
               <GlassCard>
                 <View className="gap-4">
                   <Text className="font-bold text-lg text-charcoal">
-                    Priority concerns
+                    {t('result.priorityConcerns')}
                   </Text>
                   {priorityConcerns.map((concern) => (
                     <View
@@ -431,12 +436,12 @@ export default function AnalysisResultScreen() {
               <GlassCard>
                 <View className="gap-4">
                   <Text className="font-bold text-lg text-charcoal">
-                    Available overlays
+                    {t('result.availableOverlays')}
                   </Text>
                   {visibleConcernMasks.length > 0 ? (
                     <View className="gap-3">
                       <Text className="font-sans text-sm leading-6 text-mist">
-                        Tap a concern to update the main visual above and focus on that area.
+                        {t('result.overlaysBody')}
                       </Text>
                       <View className="flex-row flex-wrap gap-3">
                         {visibleConcernMasks.map((mask) => {
@@ -464,7 +469,7 @@ export default function AnalysisResultScreen() {
                     </View>
                   ) : (
                     <Text className="font-sans text-base leading-7 text-mist">
-                      Visual highlights are not available for this analysis.
+                      {t('result.overlaysEmpty')}
                     </Text>
                   )}
                 </View>
@@ -472,7 +477,7 @@ export default function AnalysisResultScreen() {
 
               <View className="gap-3 pb-6">
                 <Button
-                  label="View Recommendations"
+                  label={t('result.viewRecommendations')}
                   onPress={() =>
                     router.push({
                       pathname: '/analysis-recommendations/[id]' as never,
@@ -481,12 +486,21 @@ export default function AnalysisResultScreen() {
                   }
                 />
                 <Button
-                  label="Run Another Analysis"
+                  label={t('result.runAnother')}
                   variant="secondary"
                   onPress={() => router.replace('/(app)/(tabs)/analysis')}
                 />
                 <Button
-                  label="Open History"
+                  label={exportingPdf ? t('result.sharingPdf') : t('result.sharePdf')}
+                  variant="secondary"
+                  onPress={() => void handleExportPdf()}
+                  disabled={exportingPdf}
+                />
+                {exportError ? (
+                  <Text className="font-sans text-sm text-roseDeep">{exportError}</Text>
+                ) : null}
+                <Button
+                  label={t('result.openHistory')}
                   variant="ghost"
                   onPress={() => router.push('/(app)/(tabs)/history')}
                 />
@@ -532,26 +546,52 @@ function getConcernScore(
   return mappedKey ? scores[mappedKey] : null;
 }
 
-function buildConcernInsight(concern: string, score: number | null): string {
+function buildConcernInsight(
+  concern: string,
+  score: number | null,
+  language: AppLanguage,
+): string {
   const scoreText =
-    score === null ? 'This concern was highlighted in your analysis.' : `This area scored ${score}.`;
+    score === null
+      ? language === 'el'
+        ? 'Αυτή η ανησυχία επισημάνθηκε στην ανάλυσή σας.'
+        : 'This concern was highlighted in your analysis.'
+      : language === 'el'
+        ? `Αυτή η περιοχή βαθμολογήθηκε με ${score}.`
+        : `This area scored ${score}.`;
 
   switch (concern) {
     case 'acne':
-      return `${scoreText} The highlighted area shows where breakout activity is most visible.`;
+      return language === 'el'
+        ? `${scoreText} Η επισημασμένη περιοχή δείχνει πού η δραστηριότητα ακμής είναι πιο ορατή.`
+        : `${scoreText} The highlighted area shows where breakout activity is most visible.`;
     case 'age_spot':
-      return `${scoreText} The highlighted area shows where discoloration and uneven tone are most visible.`;
+      return language === 'el'
+        ? `${scoreText} Η επισημασμένη περιοχή δείχνει πού ο αποχρωματισμός και ο ανομοιόμορφος τόνος είναι πιο ορατά.`
+        : `${scoreText} The highlighted area shows where discoloration and uneven tone are most visible.`;
     case 'pore':
-      return `${scoreText} The highlighted area shows where visible pores are more noticeable.`;
+      return language === 'el'
+        ? `${scoreText} Η επισημασμένη περιοχή δείχνει πού οι ορατοί πόροι είναι πιο έντονοι.`
+        : `${scoreText} The highlighted area shows where visible pores are more noticeable.`;
     case 'oiliness':
-      return `${scoreText} The highlighted area shows where excess oil may be affecting skin balance and texture.`;
+      return language === 'el'
+        ? `${scoreText} Η επισημασμένη περιοχή δείχνει πού η περίσσεια λιπαρότητας μπορεί να επηρεάζει την ισορροπία και την υφή του δέρματος.`
+        : `${scoreText} The highlighted area shows where excess oil may be affecting skin balance and texture.`;
     case 'wrinkle':
-      return `${scoreText} The highlighted area shows where fine lines and wrinkles are most visible.`;
+      return language === 'el'
+        ? `${scoreText} Η επισημασμένη περιοχή δείχνει πού οι λεπτές γραμμές και οι ρυτίδες είναι πιο ορατές.`
+        : `${scoreText} The highlighted area shows where fine lines and wrinkles are most visible.`;
     case 'moisture':
-      return `${scoreText} The highlighted area shows where dryness or dehydration is most visible.`;
+      return language === 'el'
+        ? `${scoreText} Η επισημασμένη περιοχή δείχνει πού η ξηρότητα ή η αφυδάτωση είναι πιο ορατές.`
+        : `${scoreText} The highlighted area shows where dryness or dehydration is most visible.`;
     case 'radiance':
-      return `${scoreText} The highlighted area shows where tone and radiance look less even.`;
+      return language === 'el'
+        ? `${scoreText} Η επισημασμένη περιοχή δείχνει πού ο τόνος και η λάμψη φαίνονται λιγότερο ομοιόμορφα.`
+        : `${scoreText} The highlighted area shows where tone and radiance look less even.`;
     default:
-      return `${scoreText} This overlay shows the visual region linked to the selected concern.`;
+      return language === 'el'
+        ? `${scoreText} Αυτή η επικάλυψη δείχνει την οπτική περιοχή που συνδέεται με την επιλεγμένη ανησυχία.`
+        : `${scoreText} This overlay shows the visual region linked to the selected concern.`;
   }
 }

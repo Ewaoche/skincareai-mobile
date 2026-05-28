@@ -14,9 +14,11 @@ import { GradientScreen } from '@/components/ui/gradient-screen';
 import { Input } from '@/components/ui/input';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { useResponsiveLayout } from '@/components/ui/responsive';
+import { useI18n } from '@/lib/i18n';
 
 export default function ForgotPasswordScreen() {
   const layout = useResponsiveLayout();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -29,7 +31,7 @@ export default function ForgotPasswordScreen() {
       const response = await forgotPassword({ email });
       setMessage(response.message);
     } catch {
-      setError('We could not send the reset code right now.');
+      setError(t('auth.forgot.errorDefault'));
     } finally {
       setSubmitting(false);
     }
@@ -61,18 +63,18 @@ export default function ForgotPasswordScreen() {
           >
             <View style={{ width: '100%', maxWidth: layout.isTablet ? 760 : 640, gap: 28 }}>
               <SectionHeading
-                eyebrow="Reset Access"
-                title="Reset your password"
-                body="Enter the email linked to your account and we will send you a six-digit verification code."
+                eyebrow={t('auth.forgot.eyebrow')}
+                title={t('auth.forgot.title')}
+                body={t('auth.forgot.body')}
               />
 
               <GlassCard>
                 <View className="gap-5">
                   <Input
-                    label="Email"
+                    label={t('auth.forgot.email')}
                     value={email}
                     onChangeText={setEmail}
-                    placeholder="you@example.com"
+                    placeholder={t('auth.forgot.emailPlaceholder')}
                     keyboardType="email-address"
                   />
                   {message ? (
@@ -82,7 +84,7 @@ export default function ForgotPasswordScreen() {
                     <Text className="font-sans text-sm text-roseDeep">{error}</Text>
                   ) : null}
                   <Button
-                    label={submitting ? 'Sending Code...' : 'Send Reset Code'}
+                    label={submitting ? t('auth.forgot.submitting') : t('auth.forgot.submit')}
                     onPress={() => void handleSubmit()}
                     disabled={submitting}
                     style={{ borderRadius: 999 }}
@@ -94,7 +96,8 @@ export default function ForgotPasswordScreen() {
             <View style={{ width: '100%', maxWidth: layout.isTablet ? 760 : 640, marginTop: 28 }}>
               <Link href="/(auth)/reset-password" asChild>
                 <Text className="text-center font-medium text-sm text-charcoal">
-                  Already have the code? <Text className="text-roseDeep">Reset password</Text>
+                  {t('auth.forgot.haveCode')}{' '}
+                  <Text className="text-roseDeep">{t('auth.forgot.resetPassword')}</Text>
                 </Text>
               </Link>
             </View>
