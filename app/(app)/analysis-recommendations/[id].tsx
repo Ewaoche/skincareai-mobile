@@ -63,6 +63,18 @@ export default function AnalysisRecommendationsScreen() {
             body={t('recommendations.body')}
           />
 
+          {!loading && !error && analysisId ? (
+            <Button
+              label={t('recommendations.viewRoutine')}
+              onPress={() =>
+                router.push({
+                  pathname: '/analysis-routine/[id]' as never,
+                  params: { id: analysisId } as never,
+                })
+              }
+            />
+          ) : null}
+
           {loading ? (
             <GlassCard>
               <ActivityIndicator color="#D96B8C" />

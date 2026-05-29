@@ -24,6 +24,7 @@ import {
   getScoreNarrative,
   getWeakestConcerns,
 } from '@/lib/analysis/score-insights';
+import { buildConcernInsight as buildConcernInsightText } from '@/lib/analysis/concern-insights';
 import {
   AnalysisResult,
   exportAnalysisPdf,
@@ -104,7 +105,11 @@ export default function AnalysisResultScreen() {
       )
     : null;
   const selectedConcernInsight = selectedConcernMask
-    ? buildConcernInsight(selectedConcernMask.concern, selectedConcernScore, language)
+    ? buildConcernInsightText(
+        selectedConcernMask.concern,
+        selectedConcernScore,
+        language,
+      )
     : null;
   const activeVisualUri =
     selectedConcernMask?.urls[0] ?? analysis?.faceMapUrl ?? null;
@@ -481,6 +486,16 @@ export default function AnalysisResultScreen() {
                   onPress={() =>
                     router.push({
                       pathname: '/analysis-recommendations/[id]' as never,
+                      params: { id: analysis.analysisId } as never,
+                    })
+                  }
+                />
+                <Button
+                  label={t('result.viewRoutine')}
+                  variant="secondary"
+                  onPress={() =>
+                    router.push({
+                      pathname: '/analysis-routine/[id]' as never,
                       params: { id: analysis.analysisId } as never,
                     })
                   }

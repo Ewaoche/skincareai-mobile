@@ -1,11 +1,13 @@
 import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsiveLayout } from '@/components/ui/responsive';
 import { useI18n } from '@/lib/i18n';
 import { TranslationKey } from '@/lib/i18n/types';
+import { useRoutineBasketStore } from '@/stores/routine-basket-store';
 
 const labelKeys: Record<string, TranslationKey> = {
   home: 'tabs.home',
@@ -21,7 +23,7 @@ function TabIcon({
   routeName: string;
   focused: boolean;
 }) {
-  const color = focused ? '#FFFFFF' : '#8F7885';
+  const color = focused ? '#FFFFFF' : '#5F4B56';
   const strokeWidth = focused ? 2.1 : 1.9;
 
   if (routeName === 'home') {
@@ -114,7 +116,9 @@ export function FloatingTabBar({
   state,
   navigation,
 }: BottomTabBarProps) {
+  const router = useRouter();
   const { t } = useI18n();
+  const basketCount = useRoutineBasketStore((store) => store.items.length);
   const insets = useSafeAreaInsets();
   const layout = useResponsiveLayout();
   const frameWidth = layout.isLargeTablet
@@ -122,6 +126,10 @@ export function FloatingTabBar({
     : layout.isTablet
       ? Math.min(layout.width - layout.horizontalPadding * 2, 640)
       : Math.min(layout.width - layout.horizontalPadding * 2, 420);
+  const basketChipHeight = basketCount > 0 ? (layout.isTablet ? 48 : 42) : 0;
+  const chipSpacing = basketCount > 0 ? 12 : 0;
+  const outerBottom = insets.bottom + layout.tabBarInset;
+  const basketChipTopOffset = layout.isTablet ? -6 : -4;
 
   return (
     <View
@@ -130,10 +138,40 @@ export function FloatingTabBar({
         styles.outer,
         {
           paddingHorizontal: layout.horizontalPadding,
-          bottom: insets.bottom + layout.tabBarInset,
+          bottom: outerBottom,
+          paddingTop: basketChipHeight + chipSpacing,
         },
       ]}
     >
+      {basketCount > 0 ? (
+        <Pressable
+          onPress={() => router.push('/routine-basket' as never)}
+          style={({ pressed }) => [
+            styles.basketChip,
+            {
+              minHeight: basketChipHeight,
+              opacity: pressed ? 0.9 : 1,
+              paddingHorizontal: layout.isTablet ? 18 : 16,
+              paddingVertical: layout.isTablet ? 11 : 9,
+              position: 'absolute',
+              top: basketChipTopOffset,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.basketChipText,
+              {
+                fontSize: layout.isTablet ? 13 : 12,
+                lineHeight: layout.isTablet ? 16 : 15,
+                transform: [{ translateY: -1 }],
+              },
+            ]}
+          >
+            {t('basket.openChip', { count: basketCount })}
+          </Text>
+        </Pressable>
+      ) : null}
       <View style={[styles.frame, { width: frameWidth }]}>
         <BlurView intensity={42} tint="light" style={styles.blur}>
           <View
@@ -175,7 +213,11 @@ export function FloatingTabBar({
                       borderRadius: layout.isTablet ? 28 : 24,
                       paddingVertical: layout.isTablet ? 12 : 10,
                       paddingHorizontal: layout.isTablet ? 16 : 12,
-                      backgroundColor: 'transparent',
+                      backgroundColor: isFocused
+                        ? '#8E2F53'
+                        : pressed
+                          ? 'rgba(255,255,255,0.72)'
+                          : 'transparent',
                     },
                   ]}
                 >
@@ -190,8 +232,9 @@ export function FloatingTabBar({
                   <Text
                     style={[
                       styles.label,
+                      isFocused ? styles.activeLabel : null,
                       {
-                        color: isFocused ? '#FFFFFF' : '#8F7885',
+                        color: isFocused ? '#FFFFFF' : '#4F3D47',
                         fontSize: layout.isTablet ? 13 : 12,
                       },
                     ]}
@@ -214,21 +257,39 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
+    zIndex: 40,
+    elevation: 20,
   },
   frame: {
     width: '100%',
     borderRadius: 34,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.74)',
+    borderColor: 'rgba(143,97,115,0.28)',
     shadowColor: '#8E596B',
-    shadowOpacity: 0.16,
+    shadowOpacity: 0.22,
     shadowOffset: { width: 0, height: 18 },
     shadowRadius: 32,
     elevation: 12,
   },
   blur: {
-    backgroundColor: 'rgba(255,250,248,0.80)',
+    backgroundColor: 'rgba(255,248,245,0.96)',
+  },
+  basketChip: {
+    borderRadius: 999,
+    backgroundColor: '#A32656',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.96)',
+    shadowColor: '#8E596B',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  basketChipText: {
+    color: '#2F1A22',
+    fontFamily: 'PlusJakartaSans_700Bold',
+    letterSpacing: 0.2,
   },
   inner: {
     flexDirection: 'row',
@@ -249,9 +310,12 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   activeIconWrap: {
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255,255,255,0.18)',
   },
   label: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
+  activeLabel: {
+    fontFamily: 'PlusJakartaSans_700Bold',
   },
 });

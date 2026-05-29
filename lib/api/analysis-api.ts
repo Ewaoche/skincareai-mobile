@@ -76,6 +76,35 @@ export type AnalysisRecommendationsResponse = {
   items: AnalysisRecommendationItem[];
 };
 
+export type AnalysisRoutineBasketItem = {
+  productId: string;
+  recommendationId: string;
+  name: string;
+  brand: string;
+  imageUrl: string | null;
+  buyUrl: string;
+  category: string | null;
+  priceEur: string | null;
+};
+
+export type AnalysisRoutineStep = {
+  step: number;
+  period: 'morning' | 'night';
+  label: string;
+  instruction: string;
+  productId: string | null;
+  recommendationId: string | null;
+};
+
+export type AnalysisRoutineResponse = {
+  analysisId: string;
+  basketItems: AnalysisRoutineBasketItem[];
+  morning: AnalysisRoutineStep[];
+  night: AnalysisRoutineStep[];
+  notes: string[];
+  cautions: string[];
+};
+
 export type AnalysisPdfExportResponse = {
   analysisId: string;
   pdfExportUrl: string;
@@ -235,6 +264,16 @@ export async function getAnalysisRecommendations(
 ): Promise<AnalysisRecommendationsResponse> {
   const response = await apiClient.get<ApiEnvelope<AnalysisRecommendationsResponse>>(
     `/analysis/${analysisId}/recommendations`,
+  );
+
+  return response.data.data;
+}
+
+export async function getAnalysisRoutine(
+  analysisId: string,
+): Promise<AnalysisRoutineResponse> {
+  const response = await apiClient.get<ApiEnvelope<AnalysisRoutineResponse>>(
+    `/analysis/${analysisId}/routine`,
   );
 
   return response.data.data;
