@@ -193,6 +193,51 @@ export default function HistoryScreen() {
             />
 
             {!loading && !error ? (
+              <GlassCard>
+                <View
+                  style={{
+                    flexDirection: layout.isTablet ? 'row' : 'column',
+                    gap: 14,
+                  }}
+                >
+                  <SummaryPill
+                    label="Saved scans"
+                    value={String(items.length)}
+                    detail={
+                      items.length > 0
+                        ? 'Your analysis timeline is building.'
+                        : 'Start with your first scan.'
+                    }
+                  />
+                  <SummaryPill
+                    label="Tracking"
+                    value={
+                      progressSummary.latestValue !== null
+                        ? `${Math.round(progressSummary.latestValue)}`
+                        : '--'
+                    }
+                    detail={
+                      selectedMetric === 'overall'
+                        ? 'Overall score view.'
+                        : 'Selected concern view.'
+                    }
+                  />
+                  <SummaryPill
+                    label="Trend"
+                    value={
+                      progressSummary.deltaValue === null
+                        ? '--'
+                        : progressSummary.deltaValue > 0
+                          ? `+${progressSummary.deltaValue}`
+                          : `${progressSummary.deltaValue}`
+                    }
+                    detail={progressSummary.elapsedLabel ?? 'Need more history for a longer trend.'}
+                  />
+                </View>
+              </GlassCard>
+            ) : null}
+
+            {!loading && !error ? (
               <ProgressChartCard
                 title={t('history.progressTitle')}
                 description={t('history.progressBody')}
@@ -266,7 +311,7 @@ export default function HistoryScreen() {
                           params: { id: item.analysisId } as never,
                         })
                       }
-                      className="gap-4 rounded-[24px] border border-white/70 bg-white/60"
+                      className="gap-4 rounded-[28px] border border-white/70 bg-white/68"
                       style={{ padding: layout.isTablet ? 20 : 16 }}
                     >
                       <View
@@ -278,6 +323,11 @@ export default function HistoryScreen() {
                         }}
                       >
                         <View style={{ flex: 1 }}>
+                          <View className="mb-3 self-start rounded-pill border border-white/80 bg-white/72 px-3 py-2">
+                            <Text className="font-medium text-[11px] uppercase tracking-[1.4px] text-roseDeep">
+                              Analysis report
+                            </Text>
+                          </View>
                           <Text className="font-bold text-base text-charcoal">
                             {new Date(item.capturedAt).toLocaleString(language)}
                           </Text>
@@ -304,6 +354,26 @@ export default function HistoryScreen() {
         </View>
       </ScrollView>
     </GradientScreen>
+  );
+}
+
+function SummaryPill({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <View className="flex-1 rounded-[24px] border border-white/75 bg-white/66 px-4 py-4">
+      <Text className="font-medium text-[11px] uppercase tracking-[1.5px] text-roseDeep">
+        {label}
+      </Text>
+      <Text className="mt-2 font-extra text-[28px] text-charcoal">{value}</Text>
+      <Text className="mt-2 font-sans text-sm leading-6 text-mist">{detail}</Text>
+    </View>
   );
 }
 

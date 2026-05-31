@@ -12,3 +12,5 @@ TODO.md
 *.log
 expo
 dist/
+scripts/
+build/

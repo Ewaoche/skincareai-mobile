@@ -4,11 +4,11 @@
     "slug": "skincareai-mobile",
     "scheme": "skincareai",
     "version": "0.1.0",
-    "icon": "./assets/branding/app-icon.png",
+    "icon": "./assets/branding/app-icon-v2.png",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/branding/splash.png",
+      "image": "./assets/branding/splash-v2.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFF9F7"
     },
@@ -34,10 +34,13 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/branding/adaptive-icon.png",
+        "foregroundImage": "./assets/branding/adaptive-icon-v2.png",
         "backgroundColor": "#FFF9F7"
       },
-      "package": "com.skincareai.mobile"
+      "package": "com.skincareai.mobile",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro"

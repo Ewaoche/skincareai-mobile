@@ -20,6 +20,8 @@ export type CurrentSubscription = {
   status: string;
   analysesLimit: number;
   analysesUsed: number;
+  shadeMatchesLimit: number;
+  shadeMatchesUsed: number;
   billingCycle: string;
   priceEur: string;
   renewsAt: string | null;
@@ -39,9 +41,14 @@ export type SubscriptionUsage = {
   analysesUsed: number;
   remainingAnalyses: number;
   canStartAnalysis: boolean;
+  shadeMatchesLimit: number;
+  shadeMatchesUsed: number;
+  remainingShadeMatches: number;
+  canStartShadeMatch: boolean;
   resetPeriod: 'lifetime' | 'monthly';
   renewsAt: string | null;
   reason: string | null;
+  shadeReason: string | null;
 };
 
 export async function getCurrentSubscription(): Promise<CurrentSubscription> {
