@@ -71,7 +71,7 @@ export default function ShadeShelfScreen() {
         ) : items.length === 0 ? (
           <GlassCard>
             <Text className="font-sans text-base leading-7 text-mist">
-              Your saved shade shelf is empty. Save a shade from the result screen to keep it here.
+              Your saved shade shelf is empty now. Save a shade from the result screen to keep it here.
             </Text>
           </GlassCard>
         ) : (
